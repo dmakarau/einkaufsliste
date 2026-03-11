@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../data/models/auth_user.dart';
 
 sealed class AuthState extends Equatable {
   const AuthState();
@@ -17,7 +18,7 @@ final class AuthLoading extends AuthState {
 }
 
 final class AuthAuthenticated extends AuthState {
-  final User user;
+  final AppUser user;
 
   const AuthAuthenticated(this.user);
 

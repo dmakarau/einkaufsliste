@@ -6,10 +6,16 @@ import '../models/shopping_list_model.dart';
 import '../repositories/category_repository.dart';
 import '../repositories/shopping_item_repository.dart';
 import '../repositories/shopping_list_repository.dart';
+import 'sync_service.dart';
 
-class SupabaseSyncService {
-  SupabaseClient get _client => Supabase.instance.client;
+class SupabaseSyncService implements SyncService {
+  const SupabaseSyncService(this._client);
+
+  final SupabaseClient _client;
+
   String? get _uid => _client.auth.currentUser?.id;
+
+  @override
   bool get isAuthenticated => _uid != null;
 
   // ---------------------------------------------------------------------------
@@ -17,6 +23,7 @@ class SupabaseSyncService {
   // Supabase is the source of truth — local offline data is discarded.
   // Fetch all user data from Supabase and replace Hive contents.
   // ---------------------------------------------------------------------------
+  @override
   Future<void> pullAll({
     required ShoppingListRepository listRepo,
     required ShoppingItemRepository itemRepo,
@@ -62,6 +69,7 @@ class SupabaseSyncService {
   // Individual push methods — called fire-and-forget after each local mutation.
   // ---------------------------------------------------------------------------
 
+  @override
   Future<void> pushList(ShoppingListModel list) async {
     final uid = _uid;
     if (uid == null) return;
@@ -75,12 +83,14 @@ class SupabaseSyncService {
     });
   }
 
+  @override
   Future<void> deleteList(String id) async {
     if (!isAuthenticated) return;
     await _client.from('shopping_lists').delete().eq('id', id);
     // Items are cascade-deleted by the FK constraint in Supabase.
   }
 
+  @override
   Future<void> pushItem(ShoppingItemModel item) async {
     final uid = _uid;
     if (uid == null) return;
@@ -99,11 +109,13 @@ class SupabaseSyncService {
     });
   }
 
+  @override
   Future<void> deleteItem(String id) async {
     if (!isAuthenticated) return;
     await _client.from('shopping_items').delete().eq('id', id);
   }
 
+  @override
   Future<void> pushCategory(CategoryModel cat) async {
     final uid = _uid;
     if (uid == null) return;
@@ -119,6 +131,7 @@ class SupabaseSyncService {
     });
   }
 
+  @override
   Future<void> deleteCategory(String id) async {
     if (!isAuthenticated) return;
     await _client.from('categories').delete().eq('id', id);

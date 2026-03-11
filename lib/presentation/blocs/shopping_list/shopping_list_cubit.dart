@@ -1,18 +1,19 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 import '../../../data/models/shopping_list_model.dart';
 import '../../../data/repositories/shopping_list_repository.dart';
 import '../../../data/repositories/shopping_item_repository.dart';
-import '../../../data/services/supabase_sync_service.dart';
+import '../../../data/services/sync_service.dart';
 import 'shopping_list_state.dart';
 
 class ShoppingListCubit extends Cubit<ShoppingListState> {
   ShoppingListCubit({
     required ShoppingListRepository listRepository,
     required ShoppingItemRepository itemRepository,
-    required SupabaseSyncService syncService,
+    required SyncService syncService,
   })  : _listRepo = listRepository,
         _itemRepo = itemRepository,
         _sync = syncService,
@@ -20,7 +21,7 @@ class ShoppingListCubit extends Cubit<ShoppingListState> {
 
   final ShoppingListRepository _listRepo;
   final ShoppingItemRepository _itemRepo;
-  final SupabaseSyncService _sync;
+  final SyncService _sync;
   final _uuid = const Uuid();
 
   void loadLists() {
@@ -39,7 +40,11 @@ class ShoppingListCubit extends Cubit<ShoppingListState> {
       createdAt: DateTime.now(),
     );
     await _listRepo.add(list);
-    unawaited(_sync.pushList(list));
+    unawaited(
+      _sync.pushList(list).catchError((Object e, StackTrace s) {
+        debugPrint('[SyncService] pushList error: $e\n$s');
+      }),
+    );
     loadLists();
   }
 
@@ -48,7 +53,11 @@ class ShoppingListCubit extends Cubit<ShoppingListState> {
     if (list == null) return;
     list.name = newName;
     await _listRepo.update(list);
-    unawaited(_sync.pushList(list));
+    unawaited(
+      _sync.pushList(list).catchError((Object e, StackTrace s) {
+        debugPrint('[SyncService] pushList error: $e\n$s');
+      }),
+    );
     loadLists();
   }
 
@@ -57,7 +66,11 @@ class ShoppingListCubit extends Cubit<ShoppingListState> {
     if (list == null || list.isDefault) return;
     await _itemRepo.deleteByListId(id);
     await _listRepo.delete(id);
-    unawaited(_sync.deleteList(id));
+    unawaited(
+      _sync.deleteList(id).catchError((Object e, StackTrace s) {
+        debugPrint('[SyncService] deleteList error: $e\n$s');
+      }),
+    );
     loadLists();
   }
 }

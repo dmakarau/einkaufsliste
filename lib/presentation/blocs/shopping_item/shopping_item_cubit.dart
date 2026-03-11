@@ -1,22 +1,23 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 import '../../../data/models/shopping_item_model.dart';
 import '../../../data/repositories/shopping_item_repository.dart';
-import '../../../data/services/supabase_sync_service.dart';
+import '../../../data/services/sync_service.dart';
 import 'shopping_item_state.dart';
 
 class ShoppingItemCubit extends Cubit<ShoppingItemState> {
   ShoppingItemCubit({
     required ShoppingItemRepository itemRepository,
-    required SupabaseSyncService syncService,
+    required SyncService syncService,
   })  : _repo = itemRepository,
         _sync = syncService,
         super(const ShoppingItemLoading());
 
   final ShoppingItemRepository _repo;
-  final SupabaseSyncService _sync;
+  final SyncService _sync;
   final _uuid = const Uuid();
   String? _currentListId;
   int _version = 0;
@@ -55,7 +56,11 @@ class ShoppingItemCubit extends Cubit<ShoppingItemState> {
       createdAt: DateTime.now(),
     );
     await _repo.add(item);
-    unawaited(_sync.pushItem(item));
+    unawaited(
+      _sync.pushItem(item).catchError((Object e, StackTrace s) {
+        debugPrint('[SyncService] pushItem error: $e\n$s');
+      }),
+    );
     if (_currentListId == listId) loadItems(listId);
   }
 
@@ -65,7 +70,11 @@ class ShoppingItemCubit extends Cubit<ShoppingItemState> {
     final item = state.items.firstWhere((i) => i.id == id);
     item.isChecked = !item.isChecked;
     await _repo.update(item);
-    unawaited(_sync.pushItem(item));
+    unawaited(
+      _sync.pushItem(item).catchError((Object e, StackTrace s) {
+        debugPrint('[SyncService] pushItem error: $e\n$s');
+      }),
+    );
     loadItems(state.listId);
   }
 
@@ -73,13 +82,21 @@ class ShoppingItemCubit extends Cubit<ShoppingItemState> {
     final state = this.state;
     if (state is! ShoppingItemLoaded) return;
     await _repo.delete(id);
-    unawaited(_sync.deleteItem(id));
+    unawaited(
+      _sync.deleteItem(id).catchError((Object e, StackTrace s) {
+        debugPrint('[SyncService] deleteItem error: $e\n$s');
+      }),
+    );
     loadItems(state.listId);
   }
 
   Future<void> updateItem(ShoppingItemModel item) async {
     await _repo.update(item);
-    unawaited(_sync.pushItem(item));
+    unawaited(
+      _sync.pushItem(item).catchError((Object e, StackTrace s) {
+        debugPrint('[SyncService] pushItem error: $e\n$s');
+      }),
+    );
     if (_currentListId != null) loadItems(_currentListId!);
   }
 }

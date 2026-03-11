@@ -100,8 +100,9 @@ class EinkaufslisteApp extends StatelessWidget {
     final listRepo = ShoppingListRepository();
     final itemRepo = ShoppingItemRepository();
     final catRepo = CategoryRepository();
-    final authRepo = AuthRepository();
-    final syncService = SupabaseSyncService();
+    final client = Supabase.instance.client;
+    final authRepo = AuthRepository(client);
+    final syncService = SupabaseSyncService(client);
 
     return MultiRepositoryProvider(
       providers: [

@@ -1,19 +1,19 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
+import '../../../data/models/auth_user.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/category_repository.dart';
 import '../../../data/repositories/shopping_item_repository.dart';
 import '../../../data/repositories/shopping_list_repository.dart';
-import '../../../data/services/supabase_sync_service.dart';
+import '../../../data/services/sync_service.dart';
 import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   AuthCubit({
     required AuthRepository authRepository,
-    required SupabaseSyncService syncService,
+    required SyncService syncService,
     required ShoppingListRepository listRepository,
     required ShoppingItemRepository itemRepository,
     required CategoryRepository categoryRepository,
@@ -27,14 +27,13 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   final AuthRepository _authRepo;
-  final SupabaseSyncService _sync;
+  final SyncService _sync;
   final ShoppingListRepository _listRepo;
   final ShoppingItemRepository _itemRepo;
   final CategoryRepository _catRepo;
-  late final StreamSubscription<sb.AuthState> _authSub;
+  late final StreamSubscription<AppUser?> _authSub;
 
-  Future<void> _onAuthStateChanged(sb.AuthState event) async {
-    final user = event.session?.user;
+  Future<void> _onAuthStateChanged(AppUser? user) async {
     if (user != null) {
       // Sync before emitting so BlocListener reloads lists with fresh data.
       await _sync.pullAll(
@@ -92,7 +91,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   String _extractMessage(Object e) {
-    if (e is sb.AuthException) return e.message;
+    if (e is AuthRepositoryException) return e.message;
     return e.toString();
   }
 

@@ -12,13 +12,13 @@
 - `build_context_extensions.dart` — `context.l10n` shorthand
 
 ### `lib/data/`
-- **Models**: annotated with `@HiveType` / `@HiveField`. Plain data classes.
+- **Models**: annotated with `@HiveType` / `@HiveField` for persisted data. Transient models (e.g. `AppUser`) are plain Dart classes without Hive annotations.
 - **Repositories**: async CRUD methods over Hive boxes. Local source of truth. No Supabase calls.
-- **Services**: `SupabaseSyncService` owns all Supabase table I/O. Called from Cubits fire-and-forget.
+- **Services**: `SyncService` is the abstract interface; `SupabaseSyncService` is the implementation. Called from Cubits fire-and-forget. `supabase_flutter` is imported only inside `SupabaseSyncService` and `AuthRepository` — never in the presentation layer.
 - No Flutter UI imports in this layer
 
 ### `lib/presentation/`
-- **blocs/**: Cubits + States only. May call repositories and `SupabaseSyncService`. No direct Hive access.
+- **blocs/**: Cubits + States only. May call repositories and `SyncService`. No direct Hive access. Must not import `supabase_flutter`.
 - **screens/**: One folder per screen. Prefer `StatelessWidget`; use `StatefulWidget` only when local ephemeral state is needed (e.g. text controllers, search toggle).
 - **widgets/**: Reusable widgets. No Cubit dependencies unless clearly justified.
 
@@ -50,6 +50,7 @@ presentation → core (theme, colors, router, l10n)
 | Route path | `core/router/app_router.dart` |
 | Hive model | `data/models/` |
 | Hive CRUD | `data/repositories/` |
+| Sync interface | `data/services/sync_service.dart` |
 | Supabase I/O | `data/services/supabase_sync_service.dart` |
 | State + logic | `presentation/blocs/` |
 | Screen widget | `presentation/screens/` |

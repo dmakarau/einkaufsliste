@@ -36,9 +36,9 @@ Feature-first clean architecture. See `.claude/rules/architecture.md` for layer 
 lib/
 ├── core/               # Theme, router, constants, l10n extensions
 ├── data/
-│   ├── models/         # @HiveType annotated models
+│   ├── models/         # @HiveType annotated models + transient models (e.g. AppUser)
 │   ├── repositories/   # Hive CRUD (local source of truth)
-│   └── services/       # SupabaseSyncService (cloud I/O only)
+│   └── services/       # SyncService interface + SupabaseSyncService implementation
 └── presentation/
     ├── blocs/          # Cubits + States
     ├── screens/        # One folder per screen
@@ -46,7 +46,7 @@ lib/
 └── main.dart           # Hive init, seed data, BlocProviders, Supabase init
 ```
 
-**Data flow:** Cubits read from repositories (Hive). After every write, Cubits call `SupabaseSyncService` fire-and-forget. On sign-in, `AuthCubit` calls `pullAll()` which replaces Hive with Supabase data.
+**Data flow:** Cubits read from repositories (Hive). After every write, Cubits call `SyncService` fire-and-forget (implementation: `SupabaseSyncService`). On sign-in, `AuthCubit` calls `pullAll()` which replaces Hive with Supabase data.
 
 ## Tech Stack
 | Concern | Package |
@@ -59,6 +59,7 @@ lib/
 | i18n | Flutter gen-l10n (`intl`) |
 | Value equality | `equatable` |
 | Unique IDs | `uuid` |
+| Test mocking | `mocktail` (dev) |
 
 ## Data Models
 | Model | Hive typeId | Fields |

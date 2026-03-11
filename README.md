@@ -1,0 +1,143 @@
+# Einkaufsliste
+
+A German shopping list app for iOS and Android built with Flutter. Supports multiple lists, colour-coded categories, offline-first storage, and per-account cloud sync via Supabase.
+
+## Features
+
+- Multiple named shopping lists (one protected default list)
+- Items with name, quantity, unit, category, and optional photo
+- 13 default categories with colour coding
+- Check/uncheck items; delete or edit at any time
+- Sign up / sign in / sign out — data synced to your Supabase account
+- Offline-first: works without internet, syncs when signed in
+- German / English / Russian UI (follows device locale, manual override in Settings)
+
+## Tech Stack
+
+| Concern | Solution |
+|---------|---------|
+| Framework | Flutter |
+| State management | `flutter_bloc` (Cubit pattern) |
+| Local storage | `hive_flutter` |
+| Cloud backend | Supabase (auth + PostgreSQL) |
+| Navigation | `go_router` |
+| i18n | Flutter gen-l10n (ARB files) |
+
+## Getting Started
+
+### 1. Clone and install dependencies
+
+```bash
+git clone https://github.com/YOUR_USERNAME/einkaufsliste.git
+cd einkaufsliste
+flutter pub get
+```
+
+### 2. Set up Supabase credentials
+
+Copy the example secrets file and fill in your own values:
+
+```bash
+cp .dart_defines.example .dart_defines
+```
+
+Edit `.dart_defines` (never commit this file — it is gitignored):
+
+```json
+{
+  "SUPABASE_URL": "https://YOUR_PROJECT_ID.supabase.co",
+  "SUPABASE_ANON_KEY": "YOUR_ANON_KEY_HERE"
+}
+```
+
+Find these values in your Supabase dashboard → Project Settings → API.
+
+### 3. Set up the Supabase database
+
+Run the SQL schema in the Supabase SQL Editor (one time):
+
+```sql
+create table if not exists shopping_lists (
+  id uuid primary key,
+  owner_id uuid references auth.users not null,
+  name text not null,
+  is_default boolean not null default false,
+  created_at timestamptz not null,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists shopping_items (
+  id uuid primary key,
+  list_id uuid references shopping_lists(id) on delete cascade not null,
+  owner_id uuid references auth.users not null,
+  name text not null,
+  quantity double precision not null default 1,
+  unit text not null default 'Stk.',
+  category_id uuid not null,
+  is_checked boolean not null default false,
+  image_path text,
+  created_at timestamptz not null,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists categories (
+  id uuid primary key,
+  owner_id uuid references auth.users not null,
+  name text not null,
+  color_value bigint not null,
+  sort_order int not null default 0,
+  is_default boolean not null default false,
+  created_at timestamptz not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table shopping_lists enable row level security;
+alter table shopping_items enable row level security;
+alter table categories enable row level security;
+
+create policy "users manage own lists" on shopping_lists
+  for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+
+create policy "users manage own items" on shopping_items
+  for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+
+create policy "users manage own categories" on categories
+  for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+```
+
+Also disable **Confirm email** in Supabase → Authentication → Providers → Email (required for immediate sign-in).
+
+### 4. Run the app
+
+```bash
+flutter run --dart-define-from-file=.dart_defines
+```
+
+Or use the pre-configured VS Code launch config **"Einkaufsliste (debug)"** — it passes `--dart-define-from-file` automatically.
+
+## Project Structure
+
+```
+lib/
+├── core/           # Theme, router, constants, extensions
+├── data/
+│   ├── models/     # Hive-annotated data models
+│   ├── repositories/  # CRUD over Hive boxes
+│   └── services/   # SupabaseSyncService (cloud I/O)
+└── presentation/
+    ├── blocs/      # Cubits + States
+    ├── screens/    # One folder per screen
+    └── widgets/    # Shared widgets
+```
+
+See `.claude/rules/` for architecture and Flutter coding conventions used in this project.
+
+## Key Commands
+
+```bash
+flutter run --dart-define-from-file=.dart_defines   # run with Supabase
+flutter test                                         # run tests
+flutter analyze                                      # lint
+dart format lib/                                     # format
+dart run build_runner build --delete-conflicting-outputs  # regen Hive adapters
+```

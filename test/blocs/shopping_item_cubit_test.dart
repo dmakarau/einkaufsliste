@@ -79,6 +79,23 @@ void main() {
       expect(sync.pushedItems.length, 1);
       expect(sync.pushedItems.first.name, 'Milch');
     });
+
+    test('forwards imagePath to repo and sync', () async {
+      when(() => repo.add(any())).thenAnswer((_) async {});
+      when(() => repo.getByListId('list-1')).thenReturn([]);
+
+      await cubit.addItem(
+        listId: 'list-1',
+        name: 'Käse',
+        categoryId: 'cat-1',
+        imagePath: '/data/user/0/item_images/123.jpg',
+      );
+
+      final captured =
+          verify(() => repo.add(captureAny())).captured.single as ShoppingItemModel;
+      expect(captured.imagePath, '/data/user/0/item_images/123.jpg');
+      expect(sync.pushedItems.first.imagePath, '/data/user/0/item_images/123.jpg');
+    });
   });
 
   group('deleteItem', () {

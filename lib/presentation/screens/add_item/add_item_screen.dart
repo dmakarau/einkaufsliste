@@ -1,5 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/extensions/app_localizations_extensions.dart';
@@ -22,6 +26,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
   String _selectedUnit = 'Stk.';
   String? _selectedCategoryId;
   bool _showMore = false;
+  File? _pickedImageFile;
+  bool _isPickingImage = false;
 
   @override
   void initState() {
@@ -39,6 +45,59 @@ class _AddItemScreenState extends State<AddItemScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    setState(() => _isPickingImage = true);
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+      if (picked == null) return;
+      final docsDir = await getApplicationDocumentsDirectory();
+      final destPath = p.join(
+        docsDir.path,
+        'item_images',
+        '${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
+      await Directory(p.dirname(destPath)).create(recursive: true);
+      final saved = await File(picked.path).copy(destPath);
+      setState(() => _pickedImageFile = saved);
+    } finally {
+      setState(() => _isPickingImage = false);
+    }
+  }
+
+  void _showImageSourceSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(context.l10n.bildAusGalerie),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: Text(context.l10n.fotoAufnehmen),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _save() async {
     final name = _nameController.text.trim();
     if (name.isEmpty || _selectedCategoryId == null) return;
@@ -49,6 +108,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
           quantity: qty,
           unit: _selectedUnit,
           categoryId: _selectedCategoryId!,
+          imagePath: _pickedImageFile?.path,
         );
     if (mounted) Navigator.of(context).pop();
   }
@@ -144,6 +204,38 @@ class _AddItemScreenState extends State<AddItemScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text(context.l10n.produktbild,
+                      style: const TextStyle(
+                          color: AppColors.textSecondary, fontSize: 13)),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: _showImageSourceSheet,
+                    child: Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.catAndere.withValues(alpha: 0.15),
+                        border: Border.all(color: AppColors.checkboxBorder),
+                      ),
+                      child: _isPickingImage
+                          ? const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : _pickedImageFile != null
+                              ? ClipOval(
+                                  child: Image.file(
+                                    _pickedImageFile!,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.add_a_photo_outlined,
+                                  color: AppColors.textSecondary,
+                                ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   Text(context.l10n.einheit,
                       style: const TextStyle(
                           color: AppColors.textSecondary, fontSize: 13)),

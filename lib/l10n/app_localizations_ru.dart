@@ -208,6 +208,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get catOel => 'Масло, уксус, заправки';
 
   @override
+  String get produktbild => 'Фото';
+
+  @override
+  String get bildAusGalerie => 'Выбрать из галереи';
+
+  @override
+  String get fotoAufnehmen => 'Сделать фото';
+
+  @override
   String get signOut => 'Выйти';
 
   @override

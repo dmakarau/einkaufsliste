@@ -66,6 +66,9 @@
   "catSaucen": "Saucen, Gewürze und Würzmittel",
   "catSnacks": "Snacks, Chips und Süßigkeiten",
   "catOel": "Öl, Essig und Salat-Dressings",
+  "produktbild": "Foto",
+  "bildAusGalerie": "Aus Galerie auswählen",
+  "fotoAufnehmen": "Foto aufnehmen",
   "signOut": "Abmelden",
   "welcomeUser": "Willkommen, {email}!",
   "@welcomeUser": {

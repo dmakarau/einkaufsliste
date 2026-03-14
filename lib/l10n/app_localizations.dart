@@ -496,6 +496,24 @@ abstract class AppLocalizations {
   /// **'Oil, Vinegar & Dressings'**
   String get catOel;
 
+  /// No description provided for @produktbild.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get produktbild;
+
+  /// No description provided for @bildAusGalerie.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from gallery'**
+  String get bildAusGalerie;
+
+  /// No description provided for @fotoAufnehmen.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a photo'**
+  String get fotoAufnehmen;
+
   /// No description provided for @signOut.
   ///
   /// In en, this message translates to:

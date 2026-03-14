@@ -66,6 +66,9 @@
   "catSaucen": "Sauces & Spices",
   "catSnacks": "Snacks & Sweets",
   "catOel": "Oil, Vinegar & Dressings",
+  "produktbild": "Photo",
+  "bildAusGalerie": "Choose from gallery",
+  "fotoAufnehmen": "Take a photo",
   "signOut": "Sign out",
   "welcomeUser": "Welcome, {email}!",
   "@welcomeUser": {

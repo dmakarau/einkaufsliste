@@ -66,6 +66,9 @@
   "catSaucen": "Соусы, специи, приправы",
   "catSnacks": "Снеки, чипсы и сладости",
   "catOel": "Масло, уксус, заправки",
+  "produktbild": "Фото",
+  "bildAusGalerie": "Выбрать из галереи",
+  "fotoAufnehmen": "Сделать фото",
   "signOut": "Выйти",
   "welcomeUser": "Добро пожаловать, {email}!",
   "@welcomeUser": {

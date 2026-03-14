@@ -209,6 +209,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get catOel => 'Öl, Essig und Salat-Dressings';
 
   @override
+  String get produktbild => 'Foto';
+
+  @override
+  String get bildAusGalerie => 'Aus Galerie auswählen';
+
+  @override
+  String get fotoAufnehmen => 'Foto aufnehmen';
+
+  @override
   String get signOut => 'Abmelden';
 
   @override

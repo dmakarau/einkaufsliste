@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/category_model.dart';
@@ -94,6 +95,23 @@ class SupabaseSyncService implements SyncService {
   Future<void> pushItem(ShoppingItemModel item) async {
     final uid = _uid;
     if (uid == null) return;
+
+    String? imageUrl = item.imagePath;
+    if (imageUrl != null && !imageUrl.startsWith('http')) {
+      final file = File(imageUrl);
+      if (await file.exists()) {
+        final storagePath = '$uid/${item.id}.jpg';
+        await _client.storage
+            .from('shopping-item-images')
+            .upload(storagePath, file, fileOptions: const FileOptions(upsert: true));
+        imageUrl = _client.storage
+            .from('shopping-item-images')
+            .getPublicUrl(storagePath);
+      } else {
+        imageUrl = null;
+      }
+    }
+
     await _client.from('shopping_items').upsert({
       'id': item.id,
       'list_id': item.listId,
@@ -103,7 +121,7 @@ class SupabaseSyncService implements SyncService {
       'unit': item.unit,
       'category_id': item.categoryId,
       'is_checked': item.isChecked,
-      'image_path': item.imagePath,
+      'image_path': imageUrl,
       'created_at': item.createdAt.toUtc().toIso8601String(),
       'updated_at': DateTime.now().toUtc().toIso8601String(),
     });

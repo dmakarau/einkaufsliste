@@ -59,6 +59,9 @@ lib/
 | i18n | Flutter gen-l10n (`intl`) |
 | Value equality | `equatable` |
 | Unique IDs | `uuid` |
+| Image picker | `image_picker` |
+| Network image cache | `cached_network_image` |
+| File paths | `path_provider` + `path` |
 | Test mocking | `mocktail` (dev) |
 
 ## Data Models
@@ -93,3 +96,5 @@ Modal screens (e.g. AddItemScreen) use `showModalBottomSheet`, not a route.
 
 ## Supabase Tables
 `shopping_lists`, `shopping_items`, `categories` — all with `owner_id uuid references auth.users` and RLS enabled. Schema also includes `family_groups` / `family_group_members` for future family sharing (no app UI yet).
+
+**Storage:** bucket `shopping-item-images` (public). Images are uploaded by `SupabaseSyncService.pushItem()` when `imagePath` is a local file path; the local path is replaced with the public URL before the DB upsert.

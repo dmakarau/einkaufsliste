@@ -107,7 +107,21 @@ create policy "users manage own categories" on categories
 
 Also disable **Confirm email** in Supabase → Authentication → Providers → Email (required for immediate sign-in).
 
-### 4. Run the app
+### 4. Set up Supabase Storage
+
+In the Supabase dashboard → Storage, create a bucket named **`shopping-item-images`** and set it to **Public**. Then add an RLS policy so users can only manage their own files:
+
+```sql
+create policy "users manage own images"
+on storage.objects for all
+to authenticated
+using (bucket_id = 'shopping-item-images' and (storage.foldername(name))[1] = auth.uid()::text)
+with check (bucket_id = 'shopping-item-images' and (storage.foldername(name))[1] = auth.uid()::text);
+```
+
+Images are uploaded automatically when an item with a local photo is synced.
+
+### 5. Run the app
 
 ```bash
 flutter run --dart-define-from-file=.dart_defines

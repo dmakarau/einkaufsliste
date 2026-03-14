@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/extensions/app_localizations_extensions.dart';
@@ -70,14 +72,7 @@ class ShoppingItemTile extends StatelessWidget {
                 color: categoryColor.withValues(alpha: 0.15),
               ),
               child: item.imagePath != null
-                  ? ClipOval(
-                      child: Image.asset(
-                        item.imagePath!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) =>
-                            _CategoryIcon(color: categoryColor),
-                      ),
-                    )
+                  ? ClipOval(child: _itemImage(item.imagePath!, categoryColor))
                   : _CategoryIcon(color: categoryColor),
             ),
             const SizedBox(width: 12),
@@ -109,6 +104,23 @@ class ShoppingItemTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _itemImage(String path, Color fallbackColor) {
+    if (path.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: path,
+        fit: BoxFit.cover,
+        placeholder: (_, _) =>
+            const Center(child: CircularProgressIndicator(strokeWidth: 1.5)),
+        errorWidget: (_, _, _) => _CategoryIcon(color: fallbackColor),
+      );
+    }
+    return Image.file(
+      File(path),
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => _CategoryIcon(color: fallbackColor),
     );
   }
 

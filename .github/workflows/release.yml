@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-android-bundle:
+    name: Build Android (release AAB)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Regenerate Hive adapters
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Regenerate l10n
+        run: flutter gen-l10n
+
+      - name: Write .dart_defines
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "{\"SUPABASE_URL\":\"$SUPABASE_URL\",\"SUPABASE_ANON_KEY\":\"$SUPABASE_ANON_KEY\"}" > .dart_defines
+
+      - name: Build release AAB
+        run: flutter build appbundle --release --dart-define-from-file=.dart_defines
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-aab-${{ github.ref_name }}
+          path: build/app/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+  build-ios:
+    name: Build iOS (no-codesign)
+    runs-on: macos-latest
+    needs: build-android-bundle
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Regenerate Hive adapters
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Regenerate l10n
+        run: flutter gen-l10n
+
+      - name: Write .dart_defines
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "{\"SUPABASE_URL\":\"$SUPABASE_URL\",\"SUPABASE_ANON_KEY\":\"$SUPABASE_ANON_KEY\"}" > .dart_defines
+
+      - name: Build iOS (no codesign)
+        run: flutter build ios --release --no-codesign --dart-define-from-file=.dart_defines

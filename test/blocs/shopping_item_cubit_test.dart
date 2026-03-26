@@ -151,4 +151,39 @@ void main() {
       expect(sync.pushedItems.first.isChecked, isTrue);
     });
   });
+
+  group('updateItem', () {
+    test('writes to repo and pushes to sync', () async {
+      final original = ShoppingItemModel(
+        id: 'item-1',
+        listId: 'list-1',
+        name: 'Butter',
+        quantity: 1,
+        unit: 'Stk.',
+        categoryId: 'cat-1',
+        isChecked: false,
+        createdAt: DateTime(2024),
+      );
+      final updated = ShoppingItemModel(
+        id: 'item-1',
+        listId: 'list-1',
+        name: 'Butter (gesalzen)',
+        quantity: 2,
+        unit: 'Stk.',
+        categoryId: 'cat-1',
+        isChecked: false,
+        createdAt: DateTime(2024),
+      );
+      when(() => repo.getByListId('list-1')).thenReturn([original]);
+      when(() => repo.update(any())).thenAnswer((_) async {});
+
+      cubit.loadItems('list-1');
+      await cubit.updateItem(updated);
+
+      verify(() => repo.update(any())).called(1);
+      expect(sync.pushedItems.length, 1);
+      expect(sync.pushedItems.first.name, 'Butter (gesalzen)');
+      expect(sync.pushedItems.first.quantity, 2);
+    });
+  });
 }

@@ -2,6 +2,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shopping_list/data/models/category_model.dart';
 import 'package:shopping_list/data/models/shopping_item_model.dart';
 import 'package:shopping_list/data/models/shopping_list_model.dart';
+import 'package:shopping_list/data/repositories/auth_repository.dart';
 import 'package:shopping_list/data/repositories/category_repository.dart';
 import 'package:shopping_list/data/repositories/shopping_item_repository.dart';
 import 'package:shopping_list/data/repositories/shopping_list_repository.dart';
@@ -14,6 +15,7 @@ class FakeSyncService extends Fake implements SyncService {
   final deletedListIds = <String>[];
   final pushedItems = <ShoppingItemModel>[];
   final deletedItemIds = <String>[];
+  int pullAllCalled = 0;
 
   @override
   bool get isAuthenticated => false;
@@ -23,7 +25,9 @@ class FakeSyncService extends Fake implements SyncService {
     required ShoppingListRepository listRepo,
     required ShoppingItemRepository itemRepo,
     required CategoryRepository catRepo,
-  }) async {}
+  }) async {
+    pullAllCalled++;
+  }
 
   @override
   Future<void> pushList(ShoppingListModel list) async => pushedLists.add(list);
@@ -47,3 +51,7 @@ class FakeSyncService extends Fake implements SyncService {
 class MockShoppingListRepository extends Mock implements ShoppingListRepository {}
 
 class MockShoppingItemRepository extends Mock implements ShoppingItemRepository {}
+
+class MockAuthRepository extends Mock implements AuthRepository {}
+
+class MockCategoryRepository extends Mock implements CategoryRepository {}

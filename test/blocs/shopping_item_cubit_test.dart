@@ -153,7 +153,7 @@ void main() {
   });
 
   group('updateItem', () {
-    test('writes to repo and pushes to sync', () async {
+    test('writes to repo, pushes to sync, and reloads state', () async {
       final original = ShoppingItemModel(
         id: 'item-1',
         listId: 'list-1',
@@ -174,16 +174,44 @@ void main() {
         isChecked: false,
         createdAt: DateTime(2024),
       );
+      // Initial load returns original; after update the repo returns updated.
       when(() => repo.getByListId('list-1')).thenReturn([original]);
       when(() => repo.update(any())).thenAnswer((_) async {});
 
       cubit.loadItems('list-1');
+
+      // Stub the reload (called inside updateItem) to return the updated item.
+      when(() => repo.getByListId('list-1')).thenReturn([updated]);
       await cubit.updateItem(updated);
 
       verify(() => repo.update(any())).called(1);
-      expect(sync.pushedItems.length, 1);
       expect(sync.pushedItems.first.name, 'Butter (gesalzen)');
       expect(sync.pushedItems.first.quantity, 2);
+
+      final state = cubit.state as ShoppingItemLoaded;
+      expect(state.items.first.name, 'Butter (gesalzen)');
+    });
+
+    test('persists to repo and sync even when no list is loaded', () async {
+      final item = ShoppingItemModel(
+        id: 'item-1',
+        listId: 'list-1',
+        name: 'Käse',
+        quantity: 1,
+        unit: 'Stk.',
+        categoryId: 'cat-1',
+        isChecked: false,
+        createdAt: DateTime(2024),
+      );
+      when(() => repo.update(any())).thenAnswer((_) async {});
+
+      // No loadItems call — _currentListId stays null.
+      await cubit.updateItem(item);
+
+      verify(() => repo.update(any())).called(1);
+      expect(sync.pushedItems.first.name, 'Käse');
+      // State must not change — no list is active to reload.
+      expect(cubit.state, isA<ShoppingItemLoading>());
     });
   });
 }

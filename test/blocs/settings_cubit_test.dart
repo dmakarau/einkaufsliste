@@ -6,6 +6,10 @@ import 'package:shopping_list/core/constants/hive_boxes.dart';
 import 'package:shopping_list/presentation/blocs/settings/settings_cubit.dart';
 import 'package:shopping_list/presentation/blocs/settings/settings_state.dart';
 
+// NOTE: Hive.init() and Hive.close() operate on a global singleton. This file
+// must not run concurrently with any other test file that also initialises Hive.
+// Flutter test runs files in parallel by default; if Hive tests are added
+// elsewhere, use `--concurrency=1` or isolate them with a shared tag.
 void main() {
   late Directory tempDir;
   late SettingsCubit cubit;
@@ -25,9 +29,8 @@ void main() {
 
   group('initial state', () {
     test('defaults to brightness off and device locale', () {
+      // SettingsState uses Equatable — a single equality check covers all fields.
       expect(cubit.state, const SettingsState());
-      expect(cubit.state.useScreenBrightness, isFalse);
-      expect(cubit.state.languageCode, isNull);
     });
   });
 

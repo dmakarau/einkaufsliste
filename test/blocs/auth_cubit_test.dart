@@ -51,15 +51,6 @@ class _FakeAuthRepository implements AuthRepository {
   Future<void> dispose() => _controller.close();
 }
 
-/// Pumps the async event loop enough times to let _onAuthStateChanged complete.
-/// The null-user path awaits 3 repo calls before emitting, so 5 iterations
-/// gives a comfortable margin regardless of Dart scheduler ordering.
-Future<void> _pump() async {
-  for (var i = 0; i < 5; i++) {
-    await Future<void>.microtask(() {});
-  }
-}
-
 void main() {
   late _FakeAuthRepository authRepo;
   late MockShoppingListRepository listRepo;
@@ -90,7 +81,9 @@ void main() {
 
   group('checkAuthStatus', () {
     test('emits AuthAuthenticated when user is signed in', () {
-      authRepo.setCurrentUser(const AppUser(id: 'user-1', email: 'test@test.com'));
+      authRepo.setCurrentUser(
+        const AppUser(id: 'user-1', email: 'test@test.com'),
+      );
 
       cubit.checkAuthStatus();
 
@@ -107,42 +100,59 @@ void main() {
 
   group('signIn', () {
     test('emits AuthLoading then AuthAuthenticated on success', () async {
+      final expectation = expectLater(
+        cubit.stream,
+        emitsInOrder([const AuthLoading(), isA<AuthAuthenticated>()]),
+      );
+
       await cubit.signIn(email: 'test@test.com', password: 'pass123');
-      expect(cubit.state, const AuthLoading());
-
       authRepo.emitUser(const AppUser(id: 'user-1', email: 'test@test.com'));
-      await _pump();
 
-      expect(cubit.state, isA<AuthAuthenticated>());
+      await expectation;
       expect(sync.pullAllCalled, 1);
     });
 
     test('emits AuthLoading then AuthError on failure', () async {
       authRepo.failSignInWith('Invalid credentials');
 
+      final expectation = expectLater(
+        cubit.stream,
+        emitsInOrder([const AuthLoading(), const AuthError('Invalid credentials')]),
+      );
+
       await cubit.signIn(email: 'test@test.com', password: 'wrong');
 
-      expect(cubit.state, const AuthError('Invalid credentials'));
+      await expectation;
     });
   });
 
   group('signUp', () {
     test('emits AuthLoading then AuthAuthenticated on success', () async {
+      final expectation = expectLater(
+        cubit.stream,
+        emitsInOrder([const AuthLoading(), isA<AuthAuthenticated>()]),
+      );
+
       await cubit.signUp(email: 'new@test.com', password: 'pass123');
-      expect(cubit.state, const AuthLoading());
-
       authRepo.emitUser(const AppUser(id: 'user-2', email: 'new@test.com'));
-      await _pump();
 
-      expect(cubit.state, isA<AuthAuthenticated>());
+      await expectation;
     });
 
     test('emits AuthLoading then AuthError on failure', () async {
       authRepo.failSignUpWith('Email already in use');
 
+      final expectation = expectLater(
+        cubit.stream,
+        emitsInOrder([
+          const AuthLoading(),
+          const AuthError('Email already in use'),
+        ]),
+      );
+
       await cubit.signUp(email: 'taken@test.com', password: 'pass123');
 
-      expect(cubit.state, const AuthError('Email already in use'));
+      await expectation;
     });
   });
 
@@ -152,33 +162,44 @@ void main() {
       when(() => itemRepo.clearAll()).thenAnswer((_) async {});
       when(() => catRepo.clearAll()).thenAnswer((_) async {});
 
+      final expectation = expectLater(
+        cubit.stream,
+        emitsInOrder([const AuthLoading(), const AuthUnauthenticated()]),
+      );
+
       await cubit.signOut();
-      expect(cubit.state, const AuthLoading());
-
       authRepo.emitUser(null);
-      await _pump();
 
-      expect(cubit.state, const AuthUnauthenticated());
+      await expectation;
       verify(() => listRepo.clearAll()).called(1);
       verify(() => itemRepo.clearAll()).called(1);
       verify(() => catRepo.clearAll()).called(1);
     });
 
-    test('emits AuthError on signOut failure', () async {
+    test('emits AuthLoading then AuthError on signOut failure', () async {
       authRepo.failSignOutWith('Network error');
+
+      final expectation = expectLater(
+        cubit.stream,
+        emitsInOrder([const AuthLoading(), isA<AuthError>()]),
+      );
 
       await cubit.signOut();
 
-      expect(cubit.state, isA<AuthError>());
+      await expectation;
     });
   });
 
   group('auth state stream', () {
     test('calls pullAll and emits AuthAuthenticated when user arrives', () async {
-      authRepo.emitUser(const AppUser(id: 'user-1', email: 'test@test.com'));
-      await _pump();
+      final expectation = expectLater(
+        cubit.stream,
+        emits(isA<AuthAuthenticated>()),
+      );
 
-      expect(cubit.state, isA<AuthAuthenticated>());
+      authRepo.emitUser(const AppUser(id: 'user-1', email: 'test@test.com'));
+
+      await expectation;
       expect(sync.pullAllCalled, 1);
     });
 
@@ -187,10 +208,14 @@ void main() {
       when(() => itemRepo.clearAll()).thenAnswer((_) async {});
       when(() => catRepo.clearAll()).thenAnswer((_) async {});
 
-      authRepo.emitUser(null);
-      await _pump();
+      final expectation = expectLater(
+        cubit.stream,
+        emits(const AuthUnauthenticated()),
+      );
 
-      expect(cubit.state, const AuthUnauthenticated());
+      authRepo.emitUser(null);
+
+      await expectation;
       verify(() => listRepo.clearAll()).called(1);
       verify(() => itemRepo.clearAll()).called(1);
       verify(() => catRepo.clearAll()).called(1);

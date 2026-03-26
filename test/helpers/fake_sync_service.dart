@@ -52,6 +52,11 @@ class MockShoppingListRepository extends Mock implements ShoppingListRepository 
 
 class MockShoppingItemRepository extends Mock implements ShoppingItemRepository {}
 
+/// NOTE: Do NOT use MockAuthRepository for AuthCubit tests.
+/// AuthCubit subscribes to authStateStream in its constructor; mocktail enters
+/// recording mode when that getter is stubbed via when(), which conflicts with
+/// the active stream subscription and throws "Cannot call when within a stub
+/// response". Use _FakeAuthRepository (defined in auth_cubit_test.dart) instead.
 class MockAuthRepository extends Mock implements AuthRepository {}
 
 class MockCategoryRepository extends Mock implements CategoryRepository {}

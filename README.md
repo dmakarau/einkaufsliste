@@ -1,5 +1,7 @@
 # Einkaufsliste
 
+[![CI](https://github.com/YOUR_USERNAME/einkaufsliste/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/einkaufsliste/actions/workflows/ci.yml)
+
 A German shopping list app for iOS and Android built with Flutter. Supports multiple lists, colour-coded categories, offline-first storage, and per-account cloud sync via Supabase.
 
 ## Features
@@ -122,13 +124,33 @@ with check (bucket_id = 'shopping-item-images' and (storage.foldername(name))[1]
 
 Images are uploaded automatically when an item with a local photo is synced.
 
-### 5. Run the app
+### 5. Configure GitHub Actions secrets
+
+For CI builds to use real Supabase credentials, add these secrets to your GitHub repository (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+|--------|-------|
+| `SUPABASE_URL` | Your Supabase project URL |
+| `SUPABASE_ANON_KEY` | Your Supabase anon key |
+
+CI runs without these secrets will use placeholder values (build compiles, but app cannot connect to Supabase at runtime).
+
+### 6. Run the app
 
 ```bash
 flutter run --dart-define-from-file=.dart_defines
 ```
 
 Or use the pre-configured VS Code launch config **"Einkaufsliste (debug)"** — it passes `--dart-define-from-file` automatically.
+
+## CI / CD
+
+GitHub Actions workflows live in `.github/workflows/`:
+
+| Workflow | Trigger | Jobs |
+|----------|---------|------|
+| `ci.yml` | Push / PR to `main` | Lint, format, tests, Android debug APK, web build (all Ubuntu) |
+| `release.yml` | `v*` tag push | Android release AAB (Ubuntu) + iOS no-codesign build (macOS) |
 
 ## Project Structure
 

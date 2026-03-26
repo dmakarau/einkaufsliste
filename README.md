@@ -12,16 +12,17 @@ A German shopping list app for iOS and Android built with Flutter. Supports mult
 - Offline-first: works without internet, syncs when signed in
 - German / English / Russian UI (follows device locale, manual override in Settings)
 
-## Tech Stack
+## Technologies & Frameworks
 
-| Concern | Solution |
-|---------|---------|
-| Framework | Flutter |
-| State management | `flutter_bloc` (Cubit pattern) |
-| Local storage | `hive_flutter` |
-| Cloud backend | Supabase (auth + PostgreSQL) |
-| Navigation | `go_router` |
-| i18n | Flutter gen-l10n (ARB files) |
+![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![iOS](https://img.shields.io/badge/iOS-000000?style=for-the-badge&logo=apple&logoColor=white)
+![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
+![Hive](https://img.shields.io/badge/Hive-FF7A00?style=for-the-badge&logo=hive&logoColor=white)
+![BLoC](https://img.shields.io/badge/flutter__bloc-4A148C?style=for-the-badge&logoColor=white)
+![go_router](https://img.shields.io/badge/go__router-02569B?style=for-the-badge&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 
 ## Getting Started
 

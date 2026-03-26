@@ -1,6 +1,6 @@
 # Einkaufsliste
 
-[![CI](https://github.com/YOUR_USERNAME/einkaufsliste/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/einkaufsliste/actions/workflows/ci.yml)
+[![CI](https://github.com/dmakarau/einkaufsliste/actions/workflows/ci.yml/badge.svg)](https://github.com/dmakarau/einkaufsliste/actions/workflows/ci.yml)
 
 A German shopping list app for iOS and Android built with Flutter. Supports multiple lists, colour-coded categories, offline-first storage, and per-account cloud sync via Supabase.
 
@@ -31,7 +31,7 @@ A German shopping list app for iOS and Android built with Flutter. Supports mult
 ### 1. Clone and install dependencies
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/einkaufsliste.git
+git clone https://github.com/dmakarau/einkaufsliste.git
 cd einkaufsliste
 flutter pub get
 ```

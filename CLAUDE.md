@@ -96,56 +96,11 @@ Modal screens (e.g. AddItemScreen) use `showModalBottomSheet`, not a route.
 
 ## Testing
 
-Tests live in `test/blocs/` (unit tests for Cubits) and `test/helpers/` (shared fakes).
+Tests live in `test/blocs/` (Cubit unit tests) and `test/helpers/` (shared fakes).
+Covered: `ShoppingListCubit`, `ShoppingItemCubit`, `AuthCubit`, `SettingsCubit`.
+Not covered: `AuthRepository`, `SupabaseSyncService` (wrap Supabase directly, no injection point).
 
-**Coverage:** `ShoppingListCubit`, `ShoppingItemCubit`, `AuthCubit`, `SettingsCubit`.
-`AuthRepository` and `SupabaseSyncService` wrap Supabase directly — no injection point, not unit tested.
-
-### Key test infrastructure
-
-| Helper | Purpose |
-|--------|---------|
-| `FakeSyncService` | Captures push/delete calls; no network |
-| `MockShoppingListRepository` / `MockShoppingItemRepository` / `MockCategoryRepository` | Mocktail mocks for repo layer |
-| `MockAuthRepository` | **Do not use for `AuthCubit` tests** — see note below |
-| `_FakeAuthRepository` (in `auth_cubit_test.dart`) | Hand-written fake with real `StreamController` |
-
-**Why `MockAuthRepository` cannot be used for `AuthCubit`:**
-`AuthCubit` subscribes to `authStateStream` in its constructor. Mocktail enters recording mode when `when(() => authRepo.authStateStream)` is evaluated, which conflicts with the active subscription and throws `Bad state: Cannot call when within a stub response`. Use `_FakeAuthRepository` instead — it holds a real `StreamController` and exposes `emitUser()` / `failSignInWith()` helpers.
-
-### Async state assertions
-
-For stream-driven state transitions (signIn, signOut, auth state changes), use `expectLater` + `emitsInOrder` — **not** microtask counting:
-
-```dart
-final expectation = expectLater(
-  cubit.stream,
-  emitsInOrder([const AuthLoading(), isA<AuthAuthenticated>()]),
-);
-await cubit.signIn(email: '...', password: '...');
-authRepo.emitUser(AppUser(id: '1', email: '...'));
-await expectation;
-```
-
-### Testing `SettingsCubit` (Hive-dependent)
-
-`SettingsCubit` accesses `Hive.box()` directly. Tests initialise a real Hive box in a temp directory — no mocking needed since the settings box stores only primitives:
-
-```dart
-setUp(() async {
-  final dir = await Directory.systemTemp.createTemp('hive_test_');
-  Hive.init(dir.path);
-  await Hive.openBox<dynamic>(HiveBoxes.settings);
-  cubit = SettingsCubit();
-});
-tearDown(() async {
-  await cubit.close();
-  await Hive.close();
-  await dir.delete(recursive: true);
-});
-```
-
-`Hive.init()` is a global singleton — do not add Hive initialisation to other test files unless you run them with `--concurrency=1`.
+See `.claude/rules/testing.md` for test infrastructure, the `MockAuthRepository` gotcha, async assertion patterns, and Hive test setup.
 
 ## Supabase Tables
 `shopping_lists`, `shopping_items`, `categories` — all with `owner_id uuid references auth.users` and RLS enabled. Schema also includes `family_groups` / `family_group_members` for future family sharing (no app UI yet).

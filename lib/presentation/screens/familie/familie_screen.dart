@@ -29,9 +29,9 @@ class _FamilieScreenState extends State<FamilieScreen> {
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
         }
       },
       builder: (context, state) {
@@ -55,9 +55,9 @@ class _FamilieScreenState extends State<FamilieScreen> {
             AuthAuthenticated() => _AuthenticatedBody(user: state.user.email),
             AuthLoading() => const Center(child: CircularProgressIndicator()),
             _ => _LoginForm(
-                emailController: _emailController,
-                passwordController: _passwordController,
-              ),
+              emailController: _emailController,
+              passwordController: _passwordController,
+            ),
           },
         );
       },
@@ -83,7 +83,10 @@ class _AuthenticatedBody extends StatelessWidget {
             Text(
               context.l10n.welcomeUser(user ?? ''),
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 17, color: AppColors.textPrimary),
+              style: const TextStyle(
+                fontSize: 17,
+                color: AppColors.textPrimary,
+              ),
             ),
           ],
         ),
@@ -111,8 +114,7 @@ class _LoginForm extends StatelessWidget {
           Text(
             context.l10n.familieHinweis,
             textAlign: TextAlign.center,
-            style:
-                const TextStyle(fontSize: 17, color: AppColors.textPrimary),
+            style: const TextStyle(fontSize: 17, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 48),
           TextField(
@@ -131,9 +133,9 @@ class _LoginForm extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton(
               onPressed: () => context.read<AuthCubit>().signIn(
-                    email: emailController.text.trim(),
-                    password: passwordController.text,
-                  ),
+                email: emailController.text.trim(),
+                password: passwordController.text,
+              ),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppColors.primary),
                 foregroundColor: AppColors.primary,
@@ -148,11 +150,13 @@ class _LoginForm extends StatelessWidget {
           const SizedBox(height: 12),
           TextButton(
             onPressed: () => context.read<AuthCubit>().signUp(
-                  email: emailController.text.trim(),
-                  password: passwordController.text,
-                ),
-            child: Text(context.l10n.signUp,
-                style: const TextStyle(color: AppColors.primary)),
+              email: emailController.text.trim(),
+              password: passwordController.text,
+            ),
+            child: Text(
+              context.l10n.signUp,
+              style: const TextStyle(color: AppColors.primary),
+            ),
           ),
         ],
       ),

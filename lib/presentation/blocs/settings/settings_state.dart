@@ -6,10 +6,7 @@ final class SettingsState extends Equatable {
   /// null = follow device locale; 'de', 'en', 'ru' = explicit override
   final String? languageCode;
 
-  const SettingsState({
-    this.useScreenBrightness = false,
-    this.languageCode,
-  });
+  const SettingsState({this.useScreenBrightness = false, this.languageCode});
 
   SettingsState copyWith({
     bool? useScreenBrightness,

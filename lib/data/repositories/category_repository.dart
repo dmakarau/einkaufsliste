@@ -6,7 +6,8 @@ class CategoryRepository {
   Box<CategoryModel> get _box => Hive.box<CategoryModel>(HiveBoxes.categories);
 
   List<CategoryModel> getAll() {
-    return _box.values.toList()..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    return _box.values.toList()
+      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
   }
 
   CategoryModel? getById(String id) {

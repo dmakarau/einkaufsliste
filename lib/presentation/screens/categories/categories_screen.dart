@@ -56,8 +56,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 ),
               ),
               title: Text(context.l10n.localizeCategory(cat.name)),
-              trailing: const Icon(Icons.chevron_right,
-                  color: AppColors.textSecondary),
+              trailing: const Icon(
+                Icons.chevron_right,
+                color: AppColors.textSecondary,
+              ),
               onTap: () {},
             ),
           );

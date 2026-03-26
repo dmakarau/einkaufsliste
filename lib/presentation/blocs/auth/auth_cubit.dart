@@ -17,12 +17,12 @@ class AuthCubit extends Cubit<AuthState> {
     required ShoppingListRepository listRepository,
     required ShoppingItemRepository itemRepository,
     required CategoryRepository categoryRepository,
-  })  : _authRepo = authRepository,
-        _sync = syncService,
-        _listRepo = listRepository,
-        _itemRepo = itemRepository,
-        _catRepo = categoryRepository,
-        super(const AuthInitial()) {
+  }) : _authRepo = authRepository,
+       _sync = syncService,
+       _listRepo = listRepository,
+       _itemRepo = itemRepository,
+       _catRepo = categoryRepository,
+       super(const AuthInitial()) {
     _authSub = _authRepo.authStateStream.listen(_onAuthStateChanged);
   }
 

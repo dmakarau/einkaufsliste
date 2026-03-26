@@ -24,11 +24,11 @@ class ShoppingListTile extends StatelessWidget {
       leading: list.isDefault
           ? const Icon(Icons.star_border, color: AppColors.textSecondary)
           : isEditing
-              ? GestureDetector(
-                  onTap: onDelete,
-                  child: const Icon(Icons.remove_circle, color: Colors.red),
-                )
-              : null,
+          ? GestureDetector(
+              onTap: onDelete,
+              child: const Icon(Icons.remove_circle, color: Colors.red),
+            )
+          : null,
       title: Text(list.name),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -36,10 +36,17 @@ class ShoppingListTile extends StatelessWidget {
           if (!isEditing)
             Text(
               '$itemCount',
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 15),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 15,
+              ),
             ),
           const SizedBox(width: 4),
-          const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20),
+          const Icon(
+            Icons.chevron_right,
+            color: AppColors.textSecondary,
+            size: 20,
+          ),
         ],
       ),
       onTap: onTap,

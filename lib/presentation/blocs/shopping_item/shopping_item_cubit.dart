@@ -12,9 +12,9 @@ class ShoppingItemCubit extends Cubit<ShoppingItemState> {
   ShoppingItemCubit({
     required ShoppingItemRepository itemRepository,
     required SyncService syncService,
-  })  : _repo = itemRepository,
-        _sync = syncService,
-        super(const ShoppingItemLoading());
+  }) : _repo = itemRepository,
+       _sync = syncService,
+       super(const ShoppingItemLoading());
 
   final ShoppingItemRepository _repo;
   final SyncService _sync;
@@ -31,7 +31,9 @@ class ShoppingItemCubit extends Cubit<ShoppingItemState> {
     _currentListId = listId;
     try {
       final items = _repo.getByListId(listId);
-      emit(ShoppingItemLoaded(items: items, listId: listId, version: ++_version));
+      emit(
+        ShoppingItemLoaded(items: items, listId: listId, version: ++_version),
+      );
     } catch (e) {
       emit(ShoppingItemError(e.toString()));
     }

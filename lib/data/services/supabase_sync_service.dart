@@ -34,20 +34,17 @@ class SupabaseSyncService implements SyncService {
     if (uid == null) return;
 
     // Fetch from Supabase
-    final listsData = await _client
-        .from('shopping_lists')
-        .select()
-        .eq('owner_id', uid) as List<dynamic>;
+    final listsData =
+        await _client.from('shopping_lists').select().eq('owner_id', uid)
+            as List<dynamic>;
 
-    final itemsData = await _client
-        .from('shopping_items')
-        .select()
-        .eq('owner_id', uid) as List<dynamic>;
+    final itemsData =
+        await _client.from('shopping_items').select().eq('owner_id', uid)
+            as List<dynamic>;
 
-    final catsData = await _client
-        .from('categories')
-        .select()
-        .eq('owner_id', uid) as List<dynamic>;
+    final catsData =
+        await _client.from('categories').select().eq('owner_id', uid)
+            as List<dynamic>;
 
     // 3. Replace Hive contents
     await listRepo.clearAll();
@@ -103,7 +100,11 @@ class SupabaseSyncService implements SyncService {
         final storagePath = '$uid/${item.id}.jpg';
         await _client.storage
             .from('shopping-item-images')
-            .upload(storagePath, file, fileOptions: const FileOptions(upsert: true));
+            .upload(
+              storagePath,
+              file,
+              fileOptions: const FileOptions(upsert: true),
+            );
         imageUrl = _client.storage
             .from('shopping-item-images')
             .getPublicUrl(storagePath);

@@ -3,7 +3,8 @@ import '../models/shopping_list_model.dart';
 import '../../core/constants/hive_boxes.dart';
 
 class ShoppingListRepository {
-  Box<ShoppingListModel> get _box => Hive.box<ShoppingListModel>(HiveBoxes.shoppingLists);
+  Box<ShoppingListModel> get _box =>
+      Hive.box<ShoppingListModel>(HiveBoxes.shoppingLists);
 
   List<ShoppingListModel> getAll() {
     final lists = _box.values.toList();

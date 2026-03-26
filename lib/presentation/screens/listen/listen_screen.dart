@@ -60,10 +60,7 @@ class _ListenScreenState extends State<ListenScreen> {
               )
             : Text(context.l10n.listen),
         leading: _isSearching
-            ? IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: _stopSearch,
-              )
+            ? IconButton(icon: const Icon(Icons.close), onPressed: _stopSearch)
             : IconButton(
                 icon: const Icon(Icons.search),
                 onPressed: () => setState(() => _isSearching = true),
@@ -94,10 +91,12 @@ class _ListenScreenState extends State<ListenScreen> {
             final lists = _searchQuery.isEmpty
                 ? state.lists
                 : state.lists
-                    .where((l) => l.name
-                        .toLowerCase()
-                        .contains(_searchQuery.toLowerCase()))
-                    .toList();
+                      .where(
+                        (l) => l.name.toLowerCase().contains(
+                          _searchQuery.toLowerCase(),
+                        ),
+                      )
+                      .toList();
             final itemRepo = context.read<ShoppingItemRepository>();
             // BlocBuilder on ShoppingItemCubit so item counts refresh
             // whenever an item is added, toggled, or deleted.

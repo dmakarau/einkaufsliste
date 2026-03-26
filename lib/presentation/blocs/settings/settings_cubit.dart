@@ -11,12 +11,15 @@ class SettingsCubit extends Cubit<SettingsState> {
   Box get _box => Hive.box(HiveBoxes.settings);
 
   void _load() {
-    final brightness = _box.get('useScreenBrightness', defaultValue: false) as bool;
+    final brightness =
+        _box.get('useScreenBrightness', defaultValue: false) as bool;
     final langCode = _box.get('languageCode', defaultValue: '') as String;
-    emit(SettingsState(
-      useScreenBrightness: brightness,
-      languageCode: langCode.isEmpty ? null : langCode,
-    ));
+    emit(
+      SettingsState(
+        useScreenBrightness: brightness,
+        languageCode: langCode.isEmpty ? null : langCode,
+      ),
+    );
   }
 
   Future<void> toggleScreenBrightness() async {

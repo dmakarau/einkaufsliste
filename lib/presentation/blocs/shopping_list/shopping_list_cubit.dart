@@ -14,10 +14,10 @@ class ShoppingListCubit extends Cubit<ShoppingListState> {
     required ShoppingListRepository listRepository,
     required ShoppingItemRepository itemRepository,
     required SyncService syncService,
-  })  : _listRepo = listRepository,
-        _itemRepo = itemRepository,
-        _sync = syncService,
-        super(const ShoppingListLoading());
+  }) : _listRepo = listRepository,
+       _itemRepo = itemRepository,
+       _sync = syncService,
+       super(const ShoppingListLoading());
 
   final ShoppingListRepository _listRepo;
   final ShoppingItemRepository _itemRepo;

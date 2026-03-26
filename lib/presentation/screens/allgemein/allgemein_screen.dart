@@ -107,10 +107,12 @@ class _AllgemeinScreenState extends State<AllgemeinScreen> {
               final items = _searchQuery.isEmpty
                   ? state.items
                   : state.items
-                      .where((i) => i.name
-                          .toLowerCase()
-                          .contains(_searchQuery.toLowerCase()))
-                      .toList();
+                        .where(
+                          (i) => i.name.toLowerCase().contains(
+                            _searchQuery.toLowerCase(),
+                          ),
+                        )
+                        .toList();
               if (items.isEmpty) {
                 return Center(
                   child: Text(
@@ -133,15 +135,19 @@ class _AllgemeinScreenState extends State<AllgemeinScreen> {
                       color: Colors.red,
                       alignment: Alignment.centerRight,
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: const Icon(Icons.delete_outline, color: Colors.white),
+                      child: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.white,
+                      ),
                     ),
                     onDismissed: (_) =>
                         context.read<ShoppingItemCubit>().deleteItem(item.id),
                     child: ShoppingItemTile(
                       item: item,
                       category: category,
-                      onToggle: () =>
-                          context.read<ShoppingItemCubit>().toggleChecked(item.id),
+                      onToggle: () => context
+                          .read<ShoppingItemCubit>()
+                          .toggleChecked(item.id),
                       onTap: () {},
                     ),
                   );

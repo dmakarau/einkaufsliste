@@ -54,12 +54,14 @@ Future<void> _seedDefaultData() async {
 
   final listRepo = ShoppingListRepository();
   if (listRepo.isEmpty()) {
-    await listRepo.add(ShoppingListModel(
-      id: uuid.v4(),
-      name: AppStrings.allgemeineListe,
-      isDefault: true,
-      createdAt: DateTime.now(),
-    ));
+    await listRepo.add(
+      ShoppingListModel(
+        id: uuid.v4(),
+        name: AppStrings.allgemeineListe,
+        isDefault: true,
+        createdAt: DateTime.now(),
+      ),
+    );
   }
 
   final catRepo = CategoryRepository();
@@ -81,13 +83,15 @@ Future<void> _seedDefaultData() async {
     ];
 
     for (var (index, (name, color)) in categories.indexed) {
-      await catRepo.add(CategoryModel(
-        id: uuid.v4(),
-        name: name,
-        colorValue: color.toARGB32(),
-        sortOrder: index,
-        isDefault: true,
-      ));
+      await catRepo.add(
+        CategoryModel(
+          id: uuid.v4(),
+          name: name,
+          colorValue: color.toARGB32(),
+          sortOrder: index,
+          isDefault: true,
+        ),
+      );
     }
   }
 }

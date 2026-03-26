@@ -26,10 +26,7 @@ class AuthRepository {
         return AppUser(id: u.id, email: u.email);
       });
 
-  Future<void> signUp({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signUp({required String email, required String password}) async {
     try {
       await _client.auth.signUp(email: email, password: password);
     } on AuthException catch (e) {
@@ -37,10 +34,7 @@ class AuthRepository {
     }
   }
 
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signIn({required String email, required String password}) async {
     try {
       await _client.auth.signInWithPassword(email: email, password: password);
     } on AuthException catch (e) {

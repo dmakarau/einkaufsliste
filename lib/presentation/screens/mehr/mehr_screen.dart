@@ -33,16 +33,20 @@ class MehrScreen extends StatelessWidget {
                 ListTile(
                   leading: const Icon(Icons.settings_outlined, size: 28),
                   title: Text(context.l10n.einstellungen),
-                  trailing: const Icon(Icons.chevron_right,
-                      color: AppColors.textSecondary),
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                    color: AppColors.textSecondary,
+                  ),
                   onTap: () => context.push('/mehr/settings'),
                 ),
                 const Divider(indent: 56, height: 0),
                 ListTile(
                   leading: const Icon(Icons.info_outline, size: 28),
                   title: Text(context.l10n.information),
-                  trailing: const Icon(Icons.chevron_right,
-                      color: AppColors.textSecondary),
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                    color: AppColors.textSecondary,
+                  ),
                   onTap: () => context.push('/mehr/info'),
                 ),
               ],

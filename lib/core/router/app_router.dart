@@ -32,9 +32,8 @@ final appRouter = GoRouter(
               routes: [
                 GoRoute(
                   path: ':listId',
-                  builder: (context, state) => ListDetailScreen(
-                    listId: state.pathParameters['listId']!,
-                  ),
+                  builder: (context, state) =>
+                      ListDetailScreen(listId: state.pathParameters['listId']!),
                 ),
               ],
             ),

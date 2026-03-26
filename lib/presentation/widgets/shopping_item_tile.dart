@@ -34,11 +34,7 @@ class ShoppingItemTile extends StatelessWidget {
         child: Row(
           children: [
             // Category color strip
-            Container(
-              width: 4,
-              height: 64,
-              color: categoryColor,
-            ),
+            Container(width: 4, height: 64, color: categoryColor),
             // Checkbox
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -55,7 +51,9 @@ class ShoppingItemTile extends StatelessWidget {
                       width: 1.5,
                     ),
                     borderRadius: BorderRadius.circular(4),
-                    color: item.isChecked ? AppColors.primary : Colors.transparent,
+                    color: item.isChecked
+                        ? AppColors.primary
+                        : Colors.transparent,
                   ),
                   child: item.isChecked
                       ? const Icon(Icons.check, size: 14, color: Colors.white)
@@ -85,8 +83,9 @@ class ShoppingItemTile extends StatelessWidget {
                   color: item.isChecked
                       ? AppColors.textSecondary
                       : AppColors.textPrimary,
-                  decoration:
-                      item.isChecked ? TextDecoration.lineThrough : null,
+                  decoration: item.isChecked
+                      ? TextDecoration.lineThrough
+                      : null,
                 ),
               ),
             ),
@@ -99,7 +98,11 @@ class ShoppingItemTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20),
+            const Icon(
+              Icons.chevron_right,
+              color: AppColors.textSecondary,
+              size: 20,
+            ),
             const SizedBox(width: 8),
           ],
         ),

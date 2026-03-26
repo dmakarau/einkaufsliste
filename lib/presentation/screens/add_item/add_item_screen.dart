@@ -103,13 +103,13 @@ class _AddItemScreenState extends State<AddItemScreen> {
     if (name.isEmpty || _selectedCategoryId == null) return;
     final qty = double.tryParse(_quantityController.text) ?? 1;
     await context.read<ShoppingItemCubit>().addItem(
-          listId: widget.listId,
-          name: name,
-          quantity: qty,
-          unit: _selectedUnit,
-          categoryId: _selectedCategoryId!,
-          imagePath: _pickedImageFile?.path,
-        );
+      listId: widget.listId,
+      name: name,
+      quantity: qty,
+      unit: _selectedUnit,
+      categoryId: _selectedCategoryId!,
+      imagePath: _pickedImageFile?.path,
+    );
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -204,9 +204,13 @@ class _AddItemScreenState extends State<AddItemScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(context.l10n.produktbild,
-                      style: const TextStyle(
-                          color: AppColors.textSecondary, fontSize: 13)),
+                  Text(
+                    context.l10n.produktbild,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   GestureDetector(
                     onTap: _showImageSourceSheet,
@@ -223,22 +227,26 @@ class _AddItemScreenState extends State<AddItemScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : _pickedImageFile != null
-                              ? ClipOval(
-                                  child: Image.file(
-                                    _pickedImageFile!,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : const Icon(
-                                  Icons.add_a_photo_outlined,
-                                  color: AppColors.textSecondary,
-                                ),
+                          ? ClipOval(
+                              child: Image.file(
+                                _pickedImageFile!,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.add_a_photo_outlined,
+                              color: AppColors.textSecondary,
+                            ),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Text(context.l10n.einheit,
-                      style: const TextStyle(
-                          color: AppColors.textSecondary, fontSize: 13)),
+                  Text(
+                    context.l10n.einheit,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -250,22 +258,30 @@ class _AddItemScreenState extends State<AddItemScreen> {
                         onSelected: (_) => setState(() => _selectedUnit = unit),
                         selectedColor: AppColors.primary,
                         labelStyle: TextStyle(
-                          color: selected ? Colors.white : AppColors.textPrimary,
+                          color: selected
+                              ? Colors.white
+                              : AppColors.textPrimary,
                         ),
                       );
                     }).toList(),
                   ),
                   const SizedBox(height: 16),
-                  Text(context.l10n.kategorie,
-                      style: const TextStyle(
-                          color: AppColors.textSecondary, fontSize: 13)),
+                  Text(
+                    context.l10n.kategorie,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     initialValue: _selectedCategoryId,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                     ),
                     items: categories.map((cat) {
                       return DropdownMenuItem(
@@ -286,7 +302,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
                         ),
                       );
                     }).toList(),
-                    onChanged: (val) => setState(() => _selectedCategoryId = val),
+                    onChanged: (val) =>
+                        setState(() => _selectedCategoryId = val),
                   ),
                 ],
               ),
@@ -299,7 +316,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
               child: Text(
                 context.l10n.produkttitelHinweis,
                 style: const TextStyle(
-                    color: AppColors.textSecondary, fontSize: 15),
+                  color: AppColors.textSecondary,
+                  fontSize: 15,
+                ),
               ),
             ),
         ],

@@ -53,7 +53,8 @@ class AppStrings {
 
   // Add item screen
   static const String jetztSpeichern = 'Jetzt speichern';
-  static const String produkttitelHinweis = 'Beginnen Produkttitel zu schreiben';
+  static const String produkttitelHinweis =
+      'Beginnen Produkttitel zu schreiben';
   static const String menge = 'Menge';
   static const String mehrOptionen = 'Mehr';
 
@@ -61,7 +62,15 @@ class AppStrings {
   static const String ueberProgramm = 'Über das Programm';
 
   // Units
-  static const List<String> units = ['Stk.', 'kg.', 'g.', 'Fl.', 'L.', 'Pkg.', 'ml.'];
+  static const List<String> units = [
+    'Stk.',
+    'kg.',
+    'g.',
+    'Fl.',
+    'L.',
+    'Pkg.',
+    'ml.',
+  ];
 
   // Default category names
   static const String catObstGemuese = 'Obst und Gemüse';

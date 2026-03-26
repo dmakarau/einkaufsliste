@@ -3,12 +3,11 @@ import '../models/shopping_item_model.dart';
 import '../../core/constants/hive_boxes.dart';
 
 class ShoppingItemRepository {
-  Box<ShoppingItemModel> get _box => Hive.box<ShoppingItemModel>(HiveBoxes.shoppingItems);
+  Box<ShoppingItemModel> get _box =>
+      Hive.box<ShoppingItemModel>(HiveBoxes.shoppingItems);
 
   List<ShoppingItemModel> getByListId(String listId) {
-    return _box.values
-        .where((item) => item.listId == listId)
-        .toList()
+    return _box.values.where((item) => item.listId == listId).toList()
       ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
   }
 

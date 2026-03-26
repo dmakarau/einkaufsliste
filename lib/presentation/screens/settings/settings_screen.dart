@@ -28,24 +28,30 @@ class SettingsScreen extends StatelessWidget {
                   ListTile(
                     leading: const Icon(Icons.format_list_bulleted, size: 28),
                     title: Text(context.l10n.listsTile),
-                    trailing: const Icon(Icons.chevron_right,
-                        color: AppColors.textSecondary),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: AppColors.textSecondary,
+                    ),
                     onTap: () => context.push('/listen'),
                   ),
                   const Divider(indent: 56, height: 0),
                   ListTile(
                     leading: const Icon(Icons.folder_outlined, size: 28),
                     title: Text(context.l10n.kategorienTitle),
-                    trailing: const Icon(Icons.chevron_right,
-                        color: AppColors.textSecondary),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: AppColors.textSecondary,
+                    ),
                     onTap: () => context.push('/mehr/settings/categories'),
                   ),
                   const Divider(indent: 56, height: 0),
                   ListTile(
                     leading: const Icon(Icons.menu_book_outlined, size: 28),
                     title: Text(context.l10n.woerterbuch),
-                    trailing: const Icon(Icons.chevron_right,
-                        color: AppColors.textSecondary),
+                    trailing: const Icon(
+                      Icons.chevron_right,
+                      color: AppColors.textSecondary,
+                    ),
                     onTap: () {},
                   ),
                   const Divider(indent: 56, height: 0),
@@ -58,18 +64,26 @@ class SettingsScreen extends StatelessWidget {
                         Text(
                           _languageLabel(context, state.languageCode),
                           style: const TextStyle(
-                              color: AppColors.textSecondary, fontSize: 15),
+                            color: AppColors.textSecondary,
+                            fontSize: 15,
+                          ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(Icons.chevron_right,
-                            color: AppColors.textSecondary),
+                        const Icon(
+                          Icons.chevron_right,
+                          color: AppColors.textSecondary,
+                        ),
                       ],
                     ),
-                    onTap: () => _showLanguagePicker(context, state.languageCode),
+                    onTap: () =>
+                        _showLanguagePicker(context, state.languageCode),
                   ),
                   const Divider(indent: 56, height: 0),
                   SwitchListTile(
-                    secondary: const Icon(Icons.brightness_6_outlined, size: 28),
+                    secondary: const Icon(
+                      Icons.brightness_6_outlined,
+                      size: 28,
+                    ),
                     title: Text(context.l10n.bildschirmhelligkeit),
                     value: state.useScreenBrightness,
                     activeThumbColor: AppColors.primary,

@@ -15,12 +15,14 @@ import 'data/models/shopping_item_model.dart';
 import 'data/models/shopping_list_model.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/repositories/category_repository.dart';
+import 'data/repositories/family_group_repository.dart';
 import 'data/repositories/shopping_item_repository.dart';
 import 'data/repositories/shopping_list_repository.dart';
 import 'data/services/supabase_sync_service.dart';
 import 'l10n/app_localizations.dart';
 import 'presentation/blocs/auth/auth_cubit.dart';
 import 'presentation/blocs/auth/auth_state.dart';
+import 'presentation/blocs/family/family_cubit.dart';
 import 'presentation/blocs/settings/settings_cubit.dart';
 import 'presentation/blocs/settings/settings_state.dart';
 import 'presentation/blocs/shopping_item/shopping_item_cubit.dart';
@@ -107,6 +109,7 @@ class EinkaufslisteApp extends StatelessWidget {
     final client = Supabase.instance.client;
     final authRepo = AuthRepository(client);
     final syncService = SupabaseSyncService(client);
+    final familyGroupRepo = FamilyGroupRepository(client);
 
     return MultiRepositoryProvider(
       providers: [
@@ -115,6 +118,7 @@ class EinkaufslisteApp extends StatelessWidget {
         RepositoryProvider.value(value: catRepo),
         RepositoryProvider.value(value: authRepo),
         RepositoryProvider.value(value: syncService),
+        RepositoryProvider.value(value: familyGroupRepo),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -126,6 +130,12 @@ class EinkaufslisteApp extends StatelessWidget {
               itemRepository: itemRepo,
               categoryRepository: catRepo,
             )..checkAuthStatus(),
+          ),
+          BlocProvider(
+            create: (_) => FamilyCubit(
+              familyGroupRepository: familyGroupRepo,
+              authRepository: authRepo,
+            ),
           ),
           BlocProvider(
             create: (_) => ShoppingListCubit(
@@ -143,19 +153,39 @@ class EinkaufslisteApp extends StatelessWidget {
           BlocProvider(create: (_) => SettingsCubit()),
         ],
         child: BlocBuilder<SettingsCubit, SettingsState>(
-          builder: (context, settings) => BlocListener<AuthCubit, AuthState>(
-            listener: (context, state) async {
-              final listCubit = context.read<ShoppingListCubit>();
-              final itemCubit = context.read<ShoppingItemCubit>();
-              if (state is AuthUnauthenticated) {
-                // Restore default local data so the app works offline.
-                await _seedDefaultData();
-              }
-              if (state is AuthAuthenticated || state is AuthUnauthenticated) {
-                listCubit.loadLists();
-                itemCubit.clearItems();
-              }
-            },
+          builder: (context, settings) => MultiBlocListener(
+            listeners: [
+              BlocListener<AuthCubit, AuthState>(
+                listener: (context, state) async {
+                  final listCubit = context.read<ShoppingListCubit>();
+                  final itemCubit = context.read<ShoppingItemCubit>();
+                  final familyCubit = context.read<FamilyCubit>();
+                  if (state is AuthUnauthenticated) {
+                    // Restore default local data so the app works offline.
+                    await _seedDefaultData();
+                    listCubit.stopWatching();
+                  }
+                  if (state is AuthAuthenticated) {
+                    familyCubit.loadGroupStatus();
+                  }
+                  if (state is AuthAuthenticated || state is AuthUnauthenticated) {
+                    listCubit.loadLists();
+                    itemCubit.clearItems();
+                  }
+                },
+              ),
+              BlocListener<FamilyCubit, FamilyState>(
+                listener: (context, state) {
+                  final listCubit = context.read<ShoppingListCubit>();
+                  if (state is FamilyHasGroup) {
+                    listCubit.watchGroup(state.group.id);
+                    listCubit.loadLists();
+                  } else if (state is FamilyNoGroup) {
+                    listCubit.stopWatching();
+                  }
+                },
+              ),
+            ],
             child: MaterialApp.router(
               title: 'Einkaufsliste',
               theme: AppTheme.light,

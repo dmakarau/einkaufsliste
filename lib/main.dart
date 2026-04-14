@@ -141,6 +141,7 @@ class EinkaufslisteApp extends StatelessWidget {
             create: (_) => ShoppingListCubit(
               listRepository: listRepo,
               itemRepository: itemRepo,
+              categoryRepository: catRepo,
               syncService: syncService,
             )..loadLists(),
           ),

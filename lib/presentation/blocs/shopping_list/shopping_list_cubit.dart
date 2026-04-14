@@ -4,8 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 import '../../../data/models/shopping_list_model.dart';
-import '../../../data/repositories/shopping_list_repository.dart';
+import '../../../data/repositories/category_repository.dart';
 import '../../../data/repositories/shopping_item_repository.dart';
+import '../../../data/repositories/shopping_list_repository.dart';
 import '../../../data/services/sync_service.dart';
 import 'shopping_list_state.dart';
 
@@ -13,14 +14,17 @@ class ShoppingListCubit extends Cubit<ShoppingListState> {
   ShoppingListCubit({
     required ShoppingListRepository listRepository,
     required ShoppingItemRepository itemRepository,
+    required CategoryRepository categoryRepository,
     required SyncService syncService,
   }) : _listRepo = listRepository,
        _itemRepo = itemRepository,
+       _catRepo = categoryRepository,
        _sync = syncService,
        super(const ShoppingListLoading());
 
   final ShoppingListRepository _listRepo;
   final ShoppingItemRepository _itemRepo;
+  final CategoryRepository _catRepo;
   final SyncService _sync;
   final _uuid = const Uuid();
 
@@ -109,7 +113,18 @@ class ShoppingListCubit extends Cubit<ShoppingListState> {
   // ---------------------------------------------------------------------------
 
   void watchGroup(String groupId) {
-    _sync.subscribeToGroupChanges(groupId, loadLists);
+    _sync.subscribeToGroupChanges(groupId, _onGroupChange);
+  }
+
+  Future<void> _onGroupChange() async {
+    // Pull fresh data from Supabase into Hive before refreshing the UI.
+    // loadLists() alone only re-reads Hive, which hasn't been updated yet.
+    await _sync.pullAll(
+      listRepo: _listRepo,
+      itemRepo: _itemRepo,
+      catRepo: _catRepo,
+    );
+    loadLists();
   }
 
   void stopWatching() {

@@ -25,6 +25,7 @@ void main() {
     cubit = ShoppingListCubit(
       listRepository: listRepo,
       itemRepository: itemRepo,
+      categoryRepository: MockCategoryRepository(),
       syncService: sync,
     );
   });

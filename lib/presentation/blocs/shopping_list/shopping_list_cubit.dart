@@ -73,4 +73,46 @@ class ShoppingListCubit extends Cubit<ShoppingListState> {
     );
     loadLists();
   }
+
+  // ---------------------------------------------------------------------------
+  // Family group sharing
+  // ---------------------------------------------------------------------------
+
+  Future<void> shareList(String listId, String groupId) async {
+    final list = _listRepo.getById(listId);
+    if (list == null) return;
+    final updated = list.copyWith(familyGroupId: groupId);
+    await _listRepo.update(updated);
+    unawaited(
+      _sync.shareList(listId, groupId).catchError((Object e, StackTrace s) {
+        debugPrint('[SyncService] shareList error: $e\n$s');
+      }),
+    );
+    loadLists();
+  }
+
+  Future<void> unshareList(String listId) async {
+    final list = _listRepo.getById(listId);
+    if (list == null) return;
+    final updated = list.copyWith(clearFamilyGroupId: true);
+    await _listRepo.update(updated);
+    unawaited(
+      _sync.unshareList(listId).catchError((Object e, StackTrace s) {
+        debugPrint('[SyncService] unshareList error: $e\n$s');
+      }),
+    );
+    loadLists();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Realtime group subscription
+  // ---------------------------------------------------------------------------
+
+  void watchGroup(String groupId) {
+    _sync.subscribeToGroupChanges(groupId, loadLists);
+  }
+
+  void stopWatching() {
+    _sync.unsubscribeGroupChanges();
+  }
 }

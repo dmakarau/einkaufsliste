@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shopping_list/data/models/category_model.dart';
 import 'package:shopping_list/data/models/shopping_item_model.dart';
@@ -15,6 +16,8 @@ class FakeSyncService extends Fake implements SyncService {
   final deletedListIds = <String>[];
   final pushedItems = <ShoppingItemModel>[];
   final deletedItemIds = <String>[];
+  final sharedListIds = <String>[];
+  final unsharedListIds = <String>[];
   int pullAllCalled = 0;
 
   @override
@@ -46,6 +49,20 @@ class FakeSyncService extends Fake implements SyncService {
 
   @override
   Future<void> deleteCategory(String id) async {}
+
+  @override
+  Future<void> shareList(String listId, String groupId) async =>
+      sharedListIds.add(listId);
+
+  @override
+  Future<void> unshareList(String listId) async =>
+      unsharedListIds.add(listId);
+
+  @override
+  void subscribeToGroupChanges(String groupId, VoidCallback onChanged) {}
+
+  @override
+  void unsubscribeGroupChanges() {}
 }
 
 class MockShoppingListRepository extends Mock implements ShoppingListRepository {}

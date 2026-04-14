@@ -224,4 +224,61 @@ class AppLocalizationsDe extends AppLocalizations {
   String welcomeUser(String email) {
     return 'Willkommen, $email!';
   }
+
+  @override
+  String get familieGruppenTitel => 'Meine Familiengruppe';
+
+  @override
+  String get keinGruppe => 'Du bist noch in keiner Familiengruppe';
+
+  @override
+  String get gruppeErstellen => 'Gruppe erstellen';
+
+  @override
+  String get gruppenname => 'Gruppenname';
+
+  @override
+  String get mitgliedEinladen => 'Mitglied einladen';
+
+  @override
+  String get einladungPerEmail => 'Per E-Mail einladen';
+
+  @override
+  String get gruppeEinladenHint => 'E-Mail zum Einladen eingeben';
+
+  @override
+  String get mitglieder => 'Mitglieder';
+
+  @override
+  String get gruppeVerlassen => 'Gruppe verlassen';
+
+  @override
+  String get gruppeVerlassenBestaetigung =>
+      'Möchtest du diese Gruppe wirklich verlassen?';
+
+  @override
+  String get listenTeilen => 'Mit Gruppe teilen';
+
+  @override
+  String get listenTeilenStop => 'Teilen beenden';
+
+  @override
+  String get listGeteilt => 'Mit Gruppe geteilt';
+
+  @override
+  String get einladungAusstehend => 'Ausstehend';
+
+  @override
+  String get einladungAnnehmen => 'Einladung annehmen';
+
+  @override
+  String einladungErhalten(String groupName) {
+    return 'Du wurdest zu $groupName eingeladen';
+  }
+
+  @override
+  String get adminLabel => 'Admin';
+
+  @override
+  String get memberLabel => 'Mitglied';
 }

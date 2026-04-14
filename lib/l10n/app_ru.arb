@@ -75,5 +75,28 @@
     "placeholders": {
       "email": { "type": "String" }
     }
-  }
+  },
+  "familieGruppenTitel": "Моя семья",
+  "keinGruppe": "Вы пока не состоите в семейной группе",
+  "gruppeErstellen": "Создать группу",
+  "gruppenname": "Название группы",
+  "mitgliedEinladen": "Пригласить участника",
+  "einladungPerEmail": "Пригласить по e-mail",
+  "gruppeEinladenHint": "Введите e-mail для приглашения",
+  "mitglieder": "Участники",
+  "gruppeVerlassen": "Покинуть группу",
+  "gruppeVerlassenBestaetigung": "Вы уверены, что хотите покинуть группу?",
+  "listenTeilen": "Поделиться с группой",
+  "listenTeilenStop": "Прекратить доступ",
+  "listGeteilt": "Доступна группе",
+  "einladungAusstehend": "Ожидает",
+  "einladungAnnehmen": "Принять приглашение",
+  "einladungErhalten": "Вас пригласили в группу {groupName}",
+  "@einladungErhalten": {
+    "placeholders": {
+      "groupName": { "type": "String" }
+    }
+  },
+  "adminLabel": "Администратор",
+  "memberLabel": "Участник"
 }

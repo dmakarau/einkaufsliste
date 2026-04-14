@@ -223,4 +223,61 @@ class AppLocalizationsRu extends AppLocalizations {
   String welcomeUser(String email) {
     return 'Добро пожаловать, $email!';
   }
+
+  @override
+  String get familieGruppenTitel => 'Моя семья';
+
+  @override
+  String get keinGruppe => 'Вы пока не состоите в семейной группе';
+
+  @override
+  String get gruppeErstellen => 'Создать группу';
+
+  @override
+  String get gruppenname => 'Название группы';
+
+  @override
+  String get mitgliedEinladen => 'Пригласить участника';
+
+  @override
+  String get einladungPerEmail => 'Пригласить по e-mail';
+
+  @override
+  String get gruppeEinladenHint => 'Введите e-mail для приглашения';
+
+  @override
+  String get mitglieder => 'Участники';
+
+  @override
+  String get gruppeVerlassen => 'Покинуть группу';
+
+  @override
+  String get gruppeVerlassenBestaetigung =>
+      'Вы уверены, что хотите покинуть группу?';
+
+  @override
+  String get listenTeilen => 'Поделиться с группой';
+
+  @override
+  String get listenTeilenStop => 'Прекратить доступ';
+
+  @override
+  String get listGeteilt => 'Доступна группе';
+
+  @override
+  String get einladungAusstehend => 'Ожидает';
+
+  @override
+  String get einladungAnnehmen => 'Принять приглашение';
+
+  @override
+  String einladungErhalten(String groupName) {
+    return 'Вас пригласили в группу $groupName';
+  }
+
+  @override
+  String get adminLabel => 'Администратор';
+
+  @override
+  String get memberLabel => 'Участник';
 }

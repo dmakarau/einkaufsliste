@@ -98,11 +98,24 @@ Modal screens (e.g. AddItemScreen) use `showModalBottomSheet`, not a route.
 
 Tests live in `test/blocs/` (Cubit unit tests) and `test/helpers/` (shared fakes).
 Covered: `ShoppingListCubit`, `ShoppingItemCubit`, `AuthCubit`, `SettingsCubit`.
-Not covered: `AuthRepository`, `SupabaseSyncService` (wrap Supabase directly, no injection point).
+Not covered: `AuthRepository`, `SupabaseSyncService`, `FamilyGroupRepository`, `FamilyCubit` (wrap Supabase directly, no injection point).
 
 See `.claude/rules/testing.md` for test infrastructure, the `MockAuthRepository` gotcha, async assertion patterns, and Hive test setup.
 
 ## Supabase Tables
-`shopping_lists`, `shopping_items`, `categories` — all with `owner_id uuid references auth.users` and RLS enabled. Schema also includes `family_groups` / `family_group_members` for future family sharing (no app UI yet).
+
+All tables have RLS enabled. See `.claude/rules/supabase.md` for RLS policy details and the full invite flow.
+
+| Table | Key columns |
+|-------|-------------|
+| `shopping_lists` | `id`, `owner_id`, `family_group_id` (nullable FK→`family_groups`), `name`, `is_default`, `created_at`, `updated_at` |
+| `shopping_items` | `id`, `list_id` (FK→`shopping_lists`), `owner_id`, `name`, `quantity`, `unit`, `category_id`, `is_checked`, `image_path`, `created_at`, `updated_at` |
+| `categories` | `id`, `owner_id`, `family_group_id` (nullable, reserved), `name`, `color_value`, `sort_order`, `is_default`, `created_at`, `updated_at` |
+| `family_groups` | `id`, `owner_id`, `name`, `created_at` |
+| `family_group_members` | `id`, `group_id` (FK→`family_groups`), `user_id` (nullable until accepted), `email`, `role` (`admin`/`member`), `status` (`pending`/`accepted`), `invited_by`, `created_at` |
+
+**Sharing model:** A list is shared with a group by setting `family_group_id`. RLS lets all accepted members read and write items in shared lists. Owner controls INSERT/UPDATE/DELETE on the list record itself.
+
+**Realtime:** `shopping_lists`, `shopping_items`, and `family_group_members` are in the Supabase realtime publication. `ShoppingListCubit` subscribes to group changes when the user is in a group.
 
 **Storage:** bucket `shopping-item-images` (public). Images are uploaded by `SupabaseSyncService.pushItem()` when `imagePath` is a local file path; the local path is replaced with the public URL before the DB upsert.

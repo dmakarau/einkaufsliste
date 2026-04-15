@@ -163,7 +163,7 @@ class _AllgemeinScreenState extends State<AllgemeinScreen> {
 
   void _showAddItem(BuildContext context) {
     if (_defaultListId == null) return;
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,

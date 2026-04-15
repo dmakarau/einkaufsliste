@@ -1,7 +1,7 @@
 # Einkaufsliste — Claude Development Guide
 
 ## Project Overview
-A German shopping list app for iOS/Android built with Flutter. Features multiple shopping lists, colour-coded categories, offline-first Hive storage, and per-account Supabase cloud sync. Family sharing schema is in place but not yet wired to the UI.
+A German shopping list app for iOS/Android built with Flutter. Features multiple shopping lists, colour-coded categories, offline-first Hive storage, per-account Supabase cloud sync, and family group sharing (create group, invite by email, share lists, real-time sync).
 
 ## Key Commands
 ```bash
@@ -67,7 +67,7 @@ lib/
 ## Data Models
 | Model | Hive typeId | Fields |
 |-------|------------|--------|
-| `ShoppingListModel` | 0 | id, name, isDefault, createdAt |
+| `ShoppingListModel` | 0 | id, name, isDefault, createdAt, familyGroupId (HiveField 4, nullable) |
 | `ShoppingItemModel` | 1 | id, listId, name, quantity, unit, categoryId, isChecked, imagePath, createdAt |
 | `CategoryModel` | 2 | id, name, colorValue (int), sortOrder, isDefault |
 
@@ -93,6 +93,10 @@ Box names → `lib/core/constants/hive_boxes.dart`: `shopping_lists`, `shopping_
 | Info | AboutScreen | `/mehr/info` |
 
 Modal screens (e.g. AddItemScreen) use `showModalBottomSheet`, not a route.
+
+**AddItemScreen** reads categories directly via `CategoryRepository()` (not `context.read`) and subscribes to `CategoryRepository.watch()` so the picker updates reactively if seeding completes after the sheet opens. This is intentional — the modal builder's context is outside the app's `RepositoryProvider` tree.
+
+**Auth sign-out behaviour:** `AuthCubit._onAuthStateChanged(null)` clears lists and items but intentionally does **not** clear categories. On iOS, the Supabase client fires a null auth event before restoring the session, which would empty the category box before re-seeding could complete. Categories are always overwritten by `pullAll()` on the next sign-in, so leaving them in place is safe.
 
 ## Testing
 

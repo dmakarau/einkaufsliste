@@ -15,10 +15,7 @@ import '../../../data/repositories/category_repository.dart';
 import '../../blocs/shopping_item/shopping_item_cubit.dart';
 
 class AddItemScreen extends StatefulWidget {
-  const AddItemScreen({
-    super.key,
-    required this.listId,
-  });
+  const AddItemScreen({super.key, required this.listId});
 
   final String listId;
 
@@ -187,37 +184,40 @@ class _AddItemScreenState extends State<AddItemScreen> {
                   children: [
                     for (final cat in _categories)
                       ListTile(
-                      dense: true,
-                      leading: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: Color(cat.colorValue),
-                          shape: BoxShape.circle,
+                        dense: true,
+                        leading: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: Color(cat.colorValue),
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                      title: Text(
-                        context.l10n.localizeCategory(cat.name),
-                        style: TextStyle(
-                          fontWeight: cat.id == _selectedCategoryId
-                              ? FontWeight.bold
-                              : FontWeight.normal,
+                        title: Text(
+                          context.l10n.localizeCategory(cat.name),
+                          style: TextStyle(
+                            fontWeight: cat.id == _selectedCategoryId
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
                         ),
+                        trailing: cat.id == _selectedCategoryId
+                            ? const Icon(
+                                Icons.check,
+                                size: 16,
+                                color: AppColors.primary,
+                              )
+                            : null,
+                        onTap: () => setState(() {
+                          _selectedCategoryId = cat.id;
+                          _categoryPickerOpen = false;
+                        }),
                       ),
-                      trailing: cat.id == _selectedCategoryId
-                          ? const Icon(Icons.check,
-                              size: 16, color: AppColors.primary)
-                          : null,
-                      onTap: () => setState(() {
-                        _selectedCategoryId = cat.id;
-                        _categoryPickerOpen = false;
-                      }),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
       ],
     );
   }

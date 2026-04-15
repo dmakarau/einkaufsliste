@@ -170,8 +170,7 @@ class _AppContent extends StatefulWidget {
   State<_AppContent> createState() => _AppContentState();
 }
 
-class _AppContentState extends State<_AppContent>
-    with WidgetsBindingObserver {
+class _AppContentState extends State<_AppContent> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();

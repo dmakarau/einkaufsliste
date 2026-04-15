@@ -9,7 +9,12 @@ import '../helpers/fake_sync_service.dart';
 void main() {
   setUpAll(() {
     registerFallbackValue(
-      ShoppingListModel(id: 'x', name: 'x', isDefault: false, createdAt: DateTime(2024)),
+      ShoppingListModel(
+        id: 'x',
+        name: 'x',
+        isDefault: false,
+        createdAt: DateTime(2024),
+      ),
     );
   });
 
@@ -200,15 +205,18 @@ void main() {
       expect(cubit.state, isA<ShoppingListLoading>());
     });
 
-    test('calls pullAll and emits ShoppingListLoaded when authenticated', () async {
-      sync.isAuthenticated = true;
-      when(() => listRepo.getAll()).thenReturn([]);
+    test(
+      'calls pullAll and emits ShoppingListLoaded when authenticated',
+      () async {
+        sync.isAuthenticated = true;
+        when(() => listRepo.getAll()).thenReturn([]);
 
-      await cubit.syncFromRemote();
+        await cubit.syncFromRemote();
 
-      expect(sync.pullAllCalled, 1);
-      expect(cubit.state, const ShoppingListLoaded([]));
-    });
+        expect(sync.pullAllCalled, 1);
+        expect(cubit.state, const ShoppingListLoaded([]));
+      },
+    );
 
     test('still emits ShoppingListLoaded when pullAll throws', () async {
       sync.isAuthenticated = true;

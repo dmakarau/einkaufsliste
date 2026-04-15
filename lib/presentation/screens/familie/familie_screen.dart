@@ -31,8 +31,9 @@ class _FamilieScreenState extends State<FamilieScreen> {
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthError) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(state.message)));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
         }
       },
       builder: (context, authState) {
@@ -53,13 +54,12 @@ class _FamilieScreenState extends State<FamilieScreen> {
             ],
           ),
           body: switch (authState) {
-            AuthLoading() =>
-              const Center(child: CircularProgressIndicator()),
+            AuthLoading() => const Center(child: CircularProgressIndicator()),
             AuthAuthenticated() => _GroupBody(userEmail: authState.user.email),
             _ => _LoginForm(
-                emailController: _emailController,
-                passwordController: _passwordController,
-              ),
+              emailController: _emailController,
+              passwordController: _passwordController,
+            ),
           },
         );
       },
@@ -81,8 +81,9 @@ class _GroupBody extends StatelessWidget {
     return BlocConsumer<FamilyCubit, FamilyState>(
       listener: (context, state) {
         if (state is FamilyError) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(state.message)));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
         }
       },
       builder: (context, state) => switch (state) {
@@ -91,9 +92,9 @@ class _GroupBody extends StatelessWidget {
         FamilyHasPendingInvite() => _PendingInviteView(state: state),
         FamilyHasGroup() => _GroupView(state: state),
         FamilyError() => _ErrorView(
-            message: state.message,
-            onRetry: () => context.read<FamilyCubit>().loadGroupStatus(),
-          ),
+          message: state.message,
+          onRetry: () => context.read<FamilyCubit>().loadGroupStatus(),
+        ),
       },
     );
   }
@@ -116,20 +117,30 @@ class _NoGroupView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.group_outlined, size: 64, color: AppColors.primary),
+            const Icon(
+              Icons.group_outlined,
+              size: 64,
+              color: AppColors.primary,
+            ),
             const SizedBox(height: 16),
             if (userEmail != null) ...[
               Text(
                 context.l10n.welcomeUser(userEmail!),
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 15, color: AppColors.textSecondary),
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: AppColors.textSecondary,
+                ),
               ),
               const SizedBox(height: 16),
             ],
             Text(
               context.l10n.keinGruppe,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 17, color: AppColors.textPrimary),
+              style: const TextStyle(
+                fontSize: 17,
+                color: AppColors.textPrimary,
+              ),
             ),
             const SizedBox(height: 32),
             SizedBox(
@@ -202,19 +213,27 @@ class _PendingInviteView extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.mail_outline, size: 48, color: AppColors.primary),
+                const Icon(
+                  Icons.mail_outline,
+                  size: 48,
+                  color: AppColors.primary,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   context.l10n.einladungErhalten(groupName),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 17, color: AppColors.textPrimary),
+                  style: const TextStyle(
+                    fontSize: 17,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: () =>
-                        context.read<FamilyCubit>().acceptInvite(state.group.id),
+                    onPressed: () => context.read<FamilyCubit>().acceptInvite(
+                      state.group.id,
+                    ),
                     child: Text(context.l10n.einladungAnnehmen),
                   ),
                 ),
@@ -312,7 +331,9 @@ class _GroupView extends StatelessWidget {
           controller: controller,
           autofocus: true,
           keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(hintText: context.l10n.gruppeEinladenHint),
+          decoration: InputDecoration(
+            hintText: context.l10n.gruppeEinladenHint,
+          ),
         ),
         actions: [
           TextButton(
@@ -394,7 +415,9 @@ class _MemberTile extends StatelessWidget {
     final roleLabel = member.isAdmin
         ? context.l10n.adminLabel
         : context.l10n.memberLabel;
-    final statusLabel = member.isPending ? context.l10n.einladungAusstehend : null;
+    final statusLabel = member.isPending
+        ? context.l10n.einladungAusstehend
+        : null;
 
     return ListTile(
       contentPadding: EdgeInsets.zero,
@@ -443,7 +466,11 @@ class _Badge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          fontSize: 11,
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -469,7 +496,10 @@ class _ErrorView extends StatelessWidget {
           children: [
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            OutlinedButton(onPressed: onRetry, child: Text(context.l10n.wiederholen)),
+            OutlinedButton(
+              onPressed: onRetry,
+              child: Text(context.l10n.wiederholen),
+            ),
           ],
         ),
       ),
@@ -519,9 +549,9 @@ class _LoginForm extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton(
               onPressed: () => context.read<AuthCubit>().signIn(
-                    email: emailController.text.trim(),
-                    password: passwordController.text,
-                  ),
+                email: emailController.text.trim(),
+                password: passwordController.text,
+              ),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppColors.primary),
                 foregroundColor: AppColors.primary,
@@ -536,9 +566,9 @@ class _LoginForm extends StatelessWidget {
           const SizedBox(height: 12),
           TextButton(
             onPressed: () => context.read<AuthCubit>().signUp(
-                  email: emailController.text.trim(),
-                  password: passwordController.text,
-                ),
+              email: emailController.text.trim(),
+              password: passwordController.text,
+            ),
             child: Text(
               context.l10n.signUp,
               style: const TextStyle(color: AppColors.primary),

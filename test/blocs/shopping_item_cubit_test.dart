@@ -69,11 +69,7 @@ void main() {
       when(() => repo.add(any())).thenAnswer((_) async {});
       when(() => repo.getByListId('list-1')).thenReturn([]);
 
-      await cubit.addItem(
-        listId: 'list-1',
-        name: 'Milch',
-        categoryId: 'cat-1',
-      );
+      await cubit.addItem(listId: 'list-1', name: 'Milch', categoryId: 'cat-1');
 
       verify(() => repo.add(any())).called(1);
       expect(sync.pushedItems.length, 1);
@@ -92,9 +88,13 @@ void main() {
       );
 
       final captured =
-          verify(() => repo.add(captureAny())).captured.single as ShoppingItemModel;
+          verify(() => repo.add(captureAny())).captured.single
+              as ShoppingItemModel;
       expect(captured.imagePath, '/data/user/0/item_images/123.jpg');
-      expect(sync.pushedItems.first.imagePath, '/data/user/0/item_images/123.jpg');
+      expect(
+        sync.pushedItems.first.imagePath,
+        '/data/user/0/item_images/123.jpg',
+      );
     });
   });
 

@@ -36,5 +36,13 @@ class FamilyGroupMemberModel extends Equatable {
   bool get isAdmin => role == 'admin';
 
   @override
-  List<Object?> get props => [id, groupId, userId, email, role, status, createdAt];
+  List<Object?> get props => [
+    id,
+    groupId,
+    userId,
+    email,
+    role,
+    status,
+    createdAt,
+  ];
 }

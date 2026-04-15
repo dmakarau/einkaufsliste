@@ -12,9 +12,9 @@ class FamilyCubit extends Cubit<FamilyState> {
   FamilyCubit({
     required FamilyGroupRepository familyGroupRepository,
     required AuthRepository authRepository,
-  })  : _groupRepo = familyGroupRepository,
-        _authRepo = authRepository,
-        super(const FamilyLoading());
+  }) : _groupRepo = familyGroupRepository,
+       _authRepo = authRepository,
+       super(const FamilyLoading());
 
   final FamilyGroupRepository _groupRepo;
   final AuthRepository _authRepo;
@@ -48,14 +48,16 @@ class FamilyCubit extends Cubit<FamilyState> {
           return;
         }
         // Group not visible via RLS yet — still show a generic pending state.
-        emit(FamilyHasPendingInvite(
-          group: FamilyGroupModel(
-            id: invite.groupId,
-            name: '—',
-            ownerId: '',
-            createdAt: invite.createdAt,
+        emit(
+          FamilyHasPendingInvite(
+            group: FamilyGroupModel(
+              id: invite.groupId,
+              name: '—',
+              ownerId: '',
+              createdAt: invite.createdAt,
+            ),
           ),
-        ));
+        );
         return;
       }
 
@@ -90,11 +92,13 @@ class FamilyCubit extends Cubit<FamilyState> {
       await _groupRepo.inviteMember(email, current.group.id);
       // Refresh member list.
       final members = await _groupRepo.getMembers(current.group.id);
-      emit(FamilyHasGroup(
-        group: current.group,
-        members: members,
-        isOwner: current.isOwner,
-      ));
+      emit(
+        FamilyHasGroup(
+          group: current.group,
+          members: members,
+          isOwner: current.isOwner,
+        ),
+      );
     } on FamilyGroupRepositoryException catch (e) {
       emit(FamilyError(e.message));
     }
@@ -157,11 +161,13 @@ class FamilyCubit extends Cubit<FamilyState> {
     try {
       await _groupRepo.removeMember(memberId);
       final members = await _groupRepo.getMembers(current.group.id);
-      emit(FamilyHasGroup(
-        group: current.group,
-        members: members,
-        isOwner: current.isOwner,
-      ));
+      emit(
+        FamilyHasGroup(
+          group: current.group,
+          members: members,
+          isOwner: current.isOwner,
+        ),
+      );
     } on FamilyGroupRepositoryException catch (e) {
       emit(FamilyError(e.message));
     }

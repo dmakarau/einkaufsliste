@@ -40,8 +40,10 @@ class SupabaseSyncService implements SyncService {
     final listsData = await _client.from('shopping_lists').select();
     final itemsData = await _client.from('shopping_items').select();
     // Categories are not shared; keep owner filter.
-    final catsData =
-        await _client.from('categories').select().eq('owner_id', uid);
+    final catsData = await _client
+        .from('categories')
+        .select()
+        .eq('owner_id', uid);
 
     // Parse all rows into models BEFORE touching Hive.
     // If any row is malformed this throws here and nothing is cleared.

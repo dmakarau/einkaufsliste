@@ -40,8 +40,9 @@ class ShoppingListModel extends HiveObject {
       name: name ?? this.name,
       isDefault: isDefault ?? this.isDefault,
       createdAt: createdAt,
-      familyGroupId:
-          clearFamilyGroupId ? null : (familyGroupId ?? this.familyGroupId),
+      familyGroupId: clearFamilyGroupId
+          ? null
+          : (familyGroupId ?? this.familyGroupId),
     );
   }
 }

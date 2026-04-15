@@ -56,8 +56,7 @@ class FakeSyncService extends Fake implements SyncService {
       sharedListIds.add(listId);
 
   @override
-  Future<void> unshareList(String listId) async =>
-      unsharedListIds.add(listId);
+  Future<void> unshareList(String listId) async => unsharedListIds.add(listId);
 
   @override
   void subscribeToGroupChanges(String groupId, VoidCallback onChanged) {}
@@ -66,9 +65,11 @@ class FakeSyncService extends Fake implements SyncService {
   void unsubscribeGroupChanges() {}
 }
 
-class MockShoppingListRepository extends Mock implements ShoppingListRepository {}
+class MockShoppingListRepository extends Mock
+    implements ShoppingListRepository {}
 
-class MockShoppingItemRepository extends Mock implements ShoppingItemRepository {}
+class MockShoppingItemRepository extends Mock
+    implements ShoppingItemRepository {}
 
 /// NOTE: Do NOT use MockAuthRepository for AuthCubit tests.
 /// AuthCubit subscribes to authStateStream in its constructor; mocktail enters

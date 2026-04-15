@@ -19,8 +19,7 @@ class FamilyGroupRepository {
   /// Returns a group by [id]. Requires the caller to be able to see it via RLS.
   Future<FamilyGroupModel?> getGroupById(String id) async {
     try {
-      final rows =
-          await _client.from('family_groups').select().eq('id', id);
+      final rows = await _client.from('family_groups').select().eq('id', id);
       if (rows.isEmpty) return null;
       return FamilyGroupModel.fromMap(rows.first);
     } on PostgrestException catch (e) {
@@ -102,7 +101,8 @@ class FamilyGroupRepository {
   /// Invites [email] to [groupId]. Inserts a pending member row.
   Future<void> inviteMember(String email, String groupId) async {
     final uid = _uid;
-    if (uid == null) throw const FamilyGroupRepositoryException('Not authenticated');
+    if (uid == null)
+      throw const FamilyGroupRepositoryException('Not authenticated');
     try {
       await _client.from('family_group_members').insert({
         'group_id': groupId,
@@ -137,7 +137,8 @@ class FamilyGroupRepository {
   /// Removes the current user from [groupId].
   Future<void> leaveGroup(String groupId) async {
     final uid = _uid;
-    if (uid == null) throw const FamilyGroupRepositoryException('Not authenticated');
+    if (uid == null)
+      throw const FamilyGroupRepositoryException('Not authenticated');
     try {
       await _client
           .from('family_group_members')

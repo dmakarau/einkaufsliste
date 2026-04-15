@@ -19,9 +19,9 @@ class FakeSyncService extends Fake implements SyncService {
   final sharedListIds = <String>[];
   final unsharedListIds = <String>[];
   int pullAllCalled = 0;
-
   @override
-  bool get isAuthenticated => false;
+  bool isAuthenticated = false;
+  bool shouldThrowOnPullAll = false;
 
   @override
   Future<void> pullAll({
@@ -29,6 +29,7 @@ class FakeSyncService extends Fake implements SyncService {
     required ShoppingItemRepository itemRepo,
     required CategoryRepository catRepo,
   }) async {
+    if (shouldThrowOnPullAll) throw Exception('Supabase error');
     pullAllCalled++;
   }
 

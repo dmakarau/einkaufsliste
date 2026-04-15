@@ -65,6 +65,9 @@ void main() {
     itemRepo = MockShoppingItemRepository();
     catRepo = MockCategoryRepository();
     sync = FakeSyncService();
+    // AuthCubit._onAuthStateChanged calls _catRepo.getAll() for the bootstrap
+    // push after pullAll. Stub it to return empty so no MissingStubError fires.
+    when(() => catRepo.getAll()).thenReturn([]);
     cubit = AuthCubit(
       authRepository: authRepo,
       syncService: sync,
@@ -157,10 +160,9 @@ void main() {
   });
 
   group('signOut', () {
-    test('emits AuthLoading then AuthUnauthenticated and clears repos', () async {
+    test('emits AuthLoading then AuthUnauthenticated and clears list and item repos', () async {
       when(() => listRepo.clearAll()).thenAnswer((_) async {});
       when(() => itemRepo.clearAll()).thenAnswer((_) async {});
-      when(() => catRepo.clearAll()).thenAnswer((_) async {});
 
       final expectation = expectLater(
         cubit.stream,
@@ -173,7 +175,9 @@ void main() {
       await expectation;
       verify(() => listRepo.clearAll()).called(1);
       verify(() => itemRepo.clearAll()).called(1);
-      verify(() => catRepo.clearAll()).called(1);
+      // Categories are intentionally NOT cleared on sign-out (iOS race condition
+      // fix: Supabase fires a spurious null auth event before restoring the session).
+      verifyNever(() => catRepo.clearAll());
     });
 
     test('emits AuthLoading then AuthError on signOut failure', () async {
@@ -203,10 +207,9 @@ void main() {
       expect(sync.pullAllCalled, 1);
     });
 
-    test('clears repos and emits AuthUnauthenticated when user leaves', () async {
+    test('clears list and item repos and emits AuthUnauthenticated when user leaves', () async {
       when(() => listRepo.clearAll()).thenAnswer((_) async {});
       when(() => itemRepo.clearAll()).thenAnswer((_) async {});
-      when(() => catRepo.clearAll()).thenAnswer((_) async {});
 
       final expectation = expectLater(
         cubit.stream,
@@ -218,7 +221,7 @@ void main() {
       await expectation;
       verify(() => listRepo.clearAll()).called(1);
       verify(() => itemRepo.clearAll()).called(1);
-      verify(() => catRepo.clearAll()).called(1);
+      verifyNever(() => catRepo.clearAll());
     });
   });
 }

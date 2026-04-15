@@ -11,7 +11,7 @@ A German shopping list app for iOS and Android built with Flutter. Supports mult
 - 13 default categories with colour coding
 - Check/uncheck items; delete or edit at any time
 - Sign up / sign in / sign out — data synced to your Supabase account
-- Offline-first: works without internet, syncs when signed in
+- Offline-first: works without internet, syncs on sign-in and automatically when the app returns to the foreground
 - Family group sharing — create a group, invite members by email, share individual lists; changes sync in real-time between members
 - German / English / Russian UI (follows device locale, manual override in Settings)
 

@@ -116,9 +116,16 @@ class ShoppingListCubit extends Cubit<ShoppingListState> {
     _sync.subscribeToGroupChanges(groupId, _onGroupChange);
   }
 
-  Future<void> _onGroupChange() async {
-    // Pull fresh data from Supabase into Hive before refreshing the UI.
-    // loadLists() alone only re-reads Hive, which hasn't been updated yet.
+  Future<void> _onGroupChange() async => syncFromRemote();
+
+  void stopWatching() {
+    _sync.unsubscribeGroupChanges();
+  }
+
+  /// Pulls all data from Supabase into Hive, then reloads the list state.
+  /// No-op when the user is not authenticated.
+  Future<void> syncFromRemote() async {
+    if (!_sync.isAuthenticated) return;
     try {
       await _sync.pullAll(
         listRepo: _listRepo,
@@ -126,12 +133,8 @@ class ShoppingListCubit extends Cubit<ShoppingListState> {
         catRepo: _catRepo,
       );
     } catch (e, s) {
-      debugPrint('[SyncService] pullAll error on group change: $e\n$s');
+      debugPrint('[SyncService] syncFromRemote error: $e\n$s');
     }
     loadLists();
-  }
-
-  void stopWatching() {
-    _sync.unsubscribeGroupChanges();
   }
 }

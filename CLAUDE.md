@@ -43,10 +43,10 @@ lib/
     ├── blocs/          # Cubits + States
     ├── screens/        # One folder per screen
     └── widgets/        # Shared widgets
-└── main.dart           # Hive init, seed data, BlocProviders, Supabase init
+└── main.dart           # Hive init, seed data, BlocProviders, Supabase init; _AppContent lifecycle observer
 ```
 
-**Data flow:** Cubits read from repositories (Hive). After every write, Cubits call `SyncService` fire-and-forget (implementation: `SupabaseSyncService`). On sign-in, `AuthCubit` calls `pullAll()` which replaces Hive with Supabase data.
+**Data flow:** Cubits read from repositories (Hive). After every write, Cubits call `SyncService` fire-and-forget (implementation: `SupabaseSyncService`). On sign-in, `AuthCubit` calls `pullAll()` which replaces Hive with Supabase data. `ShoppingListCubit.syncFromRemote()` provides the same pull on app resume (`AppLifecycleState.resumed` via `_AppContent` in `main.dart`) and on pull-to-refresh in `AllgemeinScreen` / `ListDetailScreen`.
 
 ## Tech Stack
 | Concern | Package |

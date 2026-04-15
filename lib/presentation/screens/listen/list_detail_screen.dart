@@ -118,9 +118,8 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
               }
               final categoryRepo = context.read<CategoryRepository>();
               return RefreshIndicator(
-                onRefresh: () async {
-                  context.read<ShoppingItemCubit>().loadItems(widget.listId);
-                },
+                onRefresh: () =>
+                    context.read<ShoppingListCubit>().syncFromRemote(),
                 child: ListView.separated(
                   itemCount: items.length,
                   separatorBuilder: (_, _) => const Divider(indent: 72),

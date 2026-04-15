@@ -43,19 +43,30 @@ class SupabaseSyncService implements SyncService {
     final catsData =
         await _client.from('categories').select().eq('owner_id', uid);
 
+    // Parse all rows into models BEFORE touching Hive.
+    // If any row is malformed this throws here and nothing is cleared.
+    final newLists = listsData.map(_listFromRow).toList();
+    final newItems = itemsData.map(_itemFromRow).toList();
+    final newCats = catsData.map(_catFromRow).toList();
+
     await listRepo.clearAll();
-    for (final row in listsData) {
-      await listRepo.add(_listFromRow(row));
+    for (final m in newLists) {
+      await listRepo.add(m);
     }
 
     await itemRepo.clearAll();
-    for (final row in itemsData) {
-      await itemRepo.add(_itemFromRow(row));
+    for (final m in newItems) {
+      await itemRepo.add(m);
     }
 
-    await catRepo.clearAll();
-    for (final row in catsData) {
-      await catRepo.add(_catFromRow(row));
+    // Only replace local categories if Supabase actually has some.
+    // If Supabase returns 0 (fresh account), keep the locally seeded defaults
+    // so the category picker is never empty.
+    if (newCats.isNotEmpty) {
+      await catRepo.clearAll();
+      for (final m in newCats) {
+        await catRepo.add(m);
+      }
     }
   }
 
@@ -195,6 +206,9 @@ class SupabaseSyncService implements SyncService {
           ),
           callback: (_) => onChanged(),
         )
+        // shopping_items has no family_group_id column so no column filter is
+        // possible here. Any item change triggers onChanged(); RLS limits what
+        // pullAll() actually fetches.
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
           schema: 'public',

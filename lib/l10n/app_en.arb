@@ -98,5 +98,9 @@
     }
   },
   "adminLabel": "Admin",
-  "memberLabel": "Member"
+  "memberLabel": "Member",
+  "wiederholen": "Retry",
+  "gruppeLoeschen": "Delete group",
+  "gruppeLoeschenBestaetigung": "Delete the group and remove all members?",
+  "gruppeUnbekannt": "Unknown group"
 }

@@ -633,6 +633,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Member'**
   String get memberLabel;
+
+  /// No description provided for @wiederholen.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get wiederholen;
+
+  /// No description provided for @gruppeLoeschen.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete group'**
+  String get gruppeLoeschen;
+
+  /// No description provided for @gruppeLoeschenBestaetigung.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the group and remove all members?'**
+  String get gruppeLoeschenBestaetigung;
+
+  /// No description provided for @gruppeUnbekannt.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown group'**
+  String get gruppeUnbekannt;
 }
 
 class _AppLocalizationsDelegate

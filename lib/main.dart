@@ -157,6 +157,10 @@ class EinkaufslisteApp extends StatelessWidget {
           builder: (context, settings) => MultiBlocListener(
             listeners: [
               BlocListener<AuthCubit, AuthState>(
+                // Only react to genuine auth transitions, not token refreshes
+                // (which re-emit AuthAuthenticated without changing the state type).
+                listenWhen: (previous, current) =>
+                    previous.runtimeType != current.runtimeType,
                 listener: (context, state) async {
                   final listCubit = context.read<ShoppingListCubit>();
                   final itemCubit = context.read<ShoppingItemCubit>();
@@ -167,6 +171,10 @@ class EinkaufslisteApp extends StatelessWidget {
                     listCubit.stopWatching();
                   }
                   if (state is AuthAuthenticated) {
+                    // pullAll() may have cleared categories if Supabase had none
+                    // (e.g. fresh install — seeded defaults were never pushed up).
+                    // Re-seed only if the box is empty; safe to call anytime.
+                    await _seedDefaultData();
                     familyCubit.loadGroupStatus();
                   }
                   if (state is AuthAuthenticated || state is AuthUnauthenticated) {
@@ -176,6 +184,12 @@ class EinkaufslisteApp extends StatelessWidget {
                 },
               ),
               BlocListener<FamilyCubit, FamilyState>(
+                // Only wire up watchGroup on the first transition into FamilyHasGroup.
+                // Repeated FamilyHasGroup emissions (e.g. after inviteMember refreshes
+                // the member list) must not tear down and re-subscribe the channel.
+                listenWhen: (prev, curr) =>
+                    (curr is FamilyHasGroup && prev is! FamilyHasGroup) ||
+                    curr is FamilyNoGroup,
                 listener: (context, state) {
                   final listCubit = context.read<ShoppingListCubit>();
                   if (state is FamilyHasGroup) {

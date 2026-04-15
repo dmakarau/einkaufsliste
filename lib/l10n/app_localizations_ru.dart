@@ -280,4 +280,17 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get memberLabel => 'Участник';
+
+  @override
+  String get wiederholen => 'Повторить';
+
+  @override
+  String get gruppeLoeschen => 'Удалить группу';
+
+  @override
+  String get gruppeLoeschenBestaetigung =>
+      'Удалить группу и убрать всех участников?';
+
+  @override
+  String get gruppeUnbekannt => 'Неизвестная группа';
 }

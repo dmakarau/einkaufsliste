@@ -119,11 +119,15 @@ class ShoppingListCubit extends Cubit<ShoppingListState> {
   Future<void> _onGroupChange() async {
     // Pull fresh data from Supabase into Hive before refreshing the UI.
     // loadLists() alone only re-reads Hive, which hasn't been updated yet.
-    await _sync.pullAll(
-      listRepo: _listRepo,
-      itemRepo: _itemRepo,
-      catRepo: _catRepo,
-    );
+    try {
+      await _sync.pullAll(
+        listRepo: _listRepo,
+        itemRepo: _itemRepo,
+        catRepo: _catRepo,
+      );
+    } catch (e, s) {
+      debugPrint('[SyncService] pullAll error on group change: $e\n$s');
+    }
     loadLists();
   }
 

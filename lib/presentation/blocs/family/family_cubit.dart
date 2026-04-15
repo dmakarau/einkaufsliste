@@ -44,10 +44,7 @@ class FamilyCubit extends Cubit<FamilyState> {
         // (see .claude/rules/supabase.md — run the extended RLS policy if needed).
         final pendingGroup = await _groupRepo.getGroupById(invite.groupId);
         if (pendingGroup != null) {
-          emit(FamilyHasPendingInvite(
-            group: pendingGroup,
-            inviterEmail: invite.email,
-          ));
+          emit(FamilyHasPendingInvite(group: pendingGroup));
           return;
         }
         // Group not visible via RLS yet — still show a generic pending state.
@@ -58,7 +55,6 @@ class FamilyCubit extends Cubit<FamilyState> {
             ownerId: '',
             createdAt: invite.createdAt,
           ),
-          inviterEmail: invite.email,
         ));
         return;
       }
@@ -125,9 +121,26 @@ class FamilyCubit extends Cubit<FamilyState> {
   Future<void> leaveGroup() async {
     final current = state;
     if (current is! FamilyHasGroup) return;
+    if (current.isOwner) return;
     emit(const FamilyLoading());
     try {
       await _groupRepo.leaveGroup(current.group.id);
+      emit(const FamilyNoGroup());
+    } on FamilyGroupRepositoryException catch (e) {
+      emit(FamilyError(e.message));
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Delete the group entirely (owner only).
+  // ---------------------------------------------------------------------------
+
+  Future<void> deleteGroup() async {
+    final current = state;
+    if (current is! FamilyHasGroup || !current.isOwner) return;
+    emit(const FamilyLoading());
+    try {
+      await _groupRepo.deleteGroup(current.group.id);
       emit(const FamilyNoGroup());
     } on FamilyGroupRepositoryException catch (e) {
       emit(FamilyError(e.message));

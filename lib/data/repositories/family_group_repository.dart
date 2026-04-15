@@ -31,7 +31,7 @@ class FamilyGroupRepository {
   /// Returns the group the current user owns or is an accepted member of.
   Future<FamilyGroupModel?> getMyGroup() async {
     try {
-      final rows = await _client.from('family_groups').select();
+      final rows = await _client.from('family_groups').select().limit(1);
       if (rows.isEmpty) return null;
       return FamilyGroupModel.fromMap(rows.first);
     } on PostgrestException catch (e) {

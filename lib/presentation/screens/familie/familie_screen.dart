@@ -190,8 +190,9 @@ class _PendingInviteView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final groupName =
-        state.group.name == '—' ? state.group.id : state.group.name;
+    final groupName = state.group.name == '—'
+        ? context.l10n.gruppeUnbekannt
+        : state.group.name;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -289,6 +290,14 @@ class _GroupView extends StatelessWidget {
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: Text(context.l10n.gruppeVerlassen),
           ),
+
+        // Delete group button (owner only)
+        if (state.isOwner)
+          TextButton(
+            onPressed: () => _confirmDeleteGroup(context),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text(context.l10n.gruppeLoeschen),
+          ),
       ],
     );
   }
@@ -319,6 +328,30 @@ class _GroupView extends StatelessWidget {
               }
             },
             child: Text(context.l10n.mitgliedEinladen),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteGroup(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.l10n.gruppeLoeschen),
+        content: Text(context.l10n.gruppeLoeschenBestaetigung),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(context.l10n.abbrechen),
+          ),
+          FilledButton(
+            onPressed: () {
+              context.read<FamilyCubit>().deleteGroup();
+              Navigator.pop(dialogContext);
+            },
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(context.l10n.gruppeLoeschen),
           ),
         ],
       ),
@@ -436,7 +469,7 @@ class _ErrorView extends StatelessWidget {
           children: [
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
+            OutlinedButton(onPressed: onRetry, child: Text(context.l10n.wiederholen)),
           ],
         ),
       ),

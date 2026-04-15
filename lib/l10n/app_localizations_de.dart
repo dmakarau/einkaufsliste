@@ -281,4 +281,17 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get memberLabel => 'Mitglied';
+
+  @override
+  String get wiederholen => 'Wiederholen';
+
+  @override
+  String get gruppeLoeschen => 'Gruppe löschen';
+
+  @override
+  String get gruppeLoeschenBestaetigung =>
+      'Gruppe löschen und alle Mitglieder entfernen?';
+
+  @override
+  String get gruppeUnbekannt => 'Unbekannte Gruppe';
 }

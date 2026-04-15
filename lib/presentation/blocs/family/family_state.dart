@@ -19,16 +19,12 @@ final class FamilyNoGroup extends FamilyState {
 }
 
 final class FamilyHasPendingInvite extends FamilyState {
-  const FamilyHasPendingInvite({
-    required this.group,
-    required this.inviterEmail,
-  });
+  const FamilyHasPendingInvite({required this.group});
 
   final FamilyGroupModel group;
-  final String inviterEmail;
 
   @override
-  List<Object?> get props => [group, inviterEmail];
+  List<Object?> get props => [group];
 }
 
 final class FamilyHasGroup extends FamilyState {

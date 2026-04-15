@@ -98,5 +98,9 @@
     }
   },
   "adminLabel": "Admin",
-  "memberLabel": "Mitglied"
+  "memberLabel": "Mitglied",
+  "wiederholen": "Wiederholen",
+  "gruppeLoeschen": "Gruppe löschen",
+  "gruppeLoeschenBestaetigung": "Gruppe löschen und alle Mitglieder entfernen?",
+  "gruppeUnbekannt": "Unbekannte Gruppe"
 }

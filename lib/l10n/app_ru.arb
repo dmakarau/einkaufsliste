@@ -98,5 +98,9 @@
     }
   },
   "adminLabel": "Администратор",
-  "memberLabel": "Участник"
+  "memberLabel": "Участник",
+  "wiederholen": "Повторить",
+  "gruppeLoeschen": "Удалить группу",
+  "gruppeLoeschenBestaetigung": "Удалить группу и убрать всех участников?",
+  "gruppeUnbekannt": "Неизвестная группа"
 }

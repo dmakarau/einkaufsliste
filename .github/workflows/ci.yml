@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -19,9 +16,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2.16.0
         with:
           channel: stable
           cache: true
@@ -50,9 +47,9 @@ jobs:
     needs: lint-test
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2.16.0
         with:
           channel: stable
           cache: true
@@ -77,7 +74,7 @@ jobs:
         run: flutter build apk --debug --dart-define-from-file=.dart_defines
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
@@ -89,9 +86,9 @@ jobs:
     needs: lint-test
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
-      - uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2.16.0
         with:
           channel: stable
           cache: true

@@ -34,6 +34,16 @@ to run against stale data. Moved clearAll() calls to before the emit.
 - Bug fixes: `fix/short-description`
 - Refactors: `refactor/short-description`
 
+## Before Every Commit
+
+Always run `dart format lib/ test/` before staging files. CI enforces `dart format --set-exit-if-changed` and will fail if formatting is off. The formatter adjusts trailing commas, line lengths, and indentation — changes that aren't always visible without running it.
+
+```bash
+dart format lib/ test/
+git add <files>
+# then commit
+```
+
 ## What Not to Commit
 
 - `.dart_defines` — gitignored, contains real Supabase credentials

@@ -101,8 +101,9 @@ class FamilyGroupRepository {
   /// Invites [email] to [groupId]. Inserts a pending member row.
   Future<void> inviteMember(String email, String groupId) async {
     final uid = _uid;
-    if (uid == null)
+    if (uid == null) {
       throw const FamilyGroupRepositoryException('Not authenticated');
+    }
     try {
       await _client.from('family_group_members').insert({
         'group_id': groupId,
@@ -137,8 +138,9 @@ class FamilyGroupRepository {
   /// Removes the current user from [groupId].
   Future<void> leaveGroup(String groupId) async {
     final uid = _uid;
-    if (uid == null)
+    if (uid == null) {
       throw const FamilyGroupRepositoryException('Not authenticated');
+    }
     try {
       await _client
           .from('family_group_members')

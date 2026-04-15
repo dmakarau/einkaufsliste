@@ -130,8 +130,9 @@ class _ListenScreenState extends State<ListenScreen> {
 
   void _showShareMenu(BuildContext context, ShoppingListModel list) {
     final familyState = context.read<FamilyCubit>().state;
-    if (familyState is! FamilyHasGroup)
+    if (familyState is! FamilyHasGroup) {
       return; // not in a group — nothing to show
+    }
 
     final groupId = familyState.group.id;
     final listCubit = context.read<ShoppingListCubit>();

@@ -34,18 +34,18 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
   List<CategoryModel> _categories = [];
   StreamSubscription<void>? _catSubscription;
+  final _categoryRepo = CategoryRepository();
 
   @override
   void initState() {
     super.initState();
     _reloadCategories();
     // Watch the Hive box so chips appear if seeding completes after the sheet opens.
-    final repo = CategoryRepository();
-    _catSubscription = repo.watch().listen((_) => _reloadCategories());
+    _catSubscription = _categoryRepo.watch().listen((_) => _reloadCategories());
   }
 
   void _reloadCategories() {
-    final cats = CategoryRepository().getAll();
+    final cats = _categoryRepo.getAll();
     if (!mounted) return;
     setState(() {
       _categories = cats;

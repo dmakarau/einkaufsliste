@@ -8,7 +8,7 @@ class ShoppingListModel extends HiveObject {
   final String id;
 
   @HiveField(1)
-  String name;
+  final String name;
 
   @HiveField(2)
   final bool isDefault;

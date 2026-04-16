@@ -55,10 +55,10 @@ class ShoppingListCubit extends Cubit<ShoppingListState> {
   Future<void> renameList(String id, String newName) async {
     final list = _listRepo.getById(id);
     if (list == null) return;
-    list.name = newName;
-    await _listRepo.update(list);
+    final updated = list.copyWith(name: newName);
+    await _listRepo.update(updated);
     unawaited(
-      _sync.pushList(list).catchError((Object e, StackTrace s) {
+      _sync.pushList(updated).catchError((Object e, StackTrace s) {
         debugPrint('[SyncService] pushList error: $e\n$s');
       }),
     );

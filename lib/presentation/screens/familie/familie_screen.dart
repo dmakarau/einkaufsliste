@@ -92,7 +92,6 @@ class _GroupBody extends StatelessWidget {
         FamilyHasPendingInvite() => _PendingInviteView(state: state),
         FamilyHasGroup() => _GroupView(state: state),
         FamilyError() => _ErrorView(
-          message: state.message,
           onRetry: () => context.read<FamilyCubit>().loadGroupStatus(),
         ),
       },
@@ -481,9 +480,8 @@ class _Badge extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message, required this.onRetry});
+  const _ErrorView({required this.onRetry});
 
-  final String message;
   final VoidCallback onRetry;
 
   @override
@@ -494,7 +492,7 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(message, textAlign: TextAlign.center),
+            Text(context.l10n.fehlerAufgetreten, textAlign: TextAlign.center),
             const SizedBox(height: 16),
             OutlinedButton(
               onPressed: onRetry,

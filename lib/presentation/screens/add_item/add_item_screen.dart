@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,6 +9,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/extensions/app_localizations_extensions.dart';
 import '../../../core/extensions/build_context_extensions.dart';
+import '../../../data/models/category_model.dart';
 import '../../../data/repositories/category_repository.dart';
 import '../../blocs/shopping_item/shopping_item_cubit.dart';
 
@@ -26,20 +28,36 @@ class _AddItemScreenState extends State<AddItemScreen> {
   String _selectedUnit = 'Stk.';
   String? _selectedCategoryId;
   bool _showMore = false;
+  bool _categoryPickerOpen = false;
   File? _pickedImageFile;
   bool _isPickingImage = false;
+
+  List<CategoryModel> _categories = [];
+  StreamSubscription<void>? _catSubscription;
+  final _categoryRepo = CategoryRepository();
 
   @override
   void initState() {
     super.initState();
-    final categories = context.read<CategoryRepository>().getAll();
-    if (categories.isNotEmpty) {
-      _selectedCategoryId = categories.first.id;
-    }
+    _reloadCategories();
+    // Watch the Hive box so chips appear if seeding completes after the sheet opens.
+    _catSubscription = _categoryRepo.watch().listen((_) => _reloadCategories());
+  }
+
+  void _reloadCategories() {
+    final cats = _categoryRepo.getAll();
+    if (!mounted) return;
+    setState(() {
+      _categories = cats;
+      if (_selectedCategoryId == null && cats.isNotEmpty) {
+        _selectedCategoryId = cats.first.id;
+      }
+    });
   }
 
   @override
   void dispose() {
+    _catSubscription?.cancel();
     _nameController.dispose();
     _quantityController.dispose();
     super.dispose();
@@ -98,6 +116,111 @@ class _AddItemScreenState extends State<AddItemScreen> {
     );
   }
 
+  Widget _buildCategoryDropdown() {
+    final selected = _categories
+        .where((c) => c.id == _selectedCategoryId)
+        .firstOrNull;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InkWell(
+          onTap: () =>
+              setState(() => _categoryPickerOpen = !_categoryPickerOpen),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(4),
+                topRight: const Radius.circular(4),
+                bottomLeft: Radius.circular(_categoryPickerOpen ? 0 : 4),
+                bottomRight: Radius.circular(_categoryPickerOpen ? 0 : 4),
+              ),
+            ),
+            child: Row(
+              children: [
+                if (selected != null) ...[
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Color(selected.colorValue),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(context.l10n.localizeCategory(selected.name)),
+                  ),
+                ] else
+                  const Expanded(child: Text('')),
+                Icon(
+                  _categoryPickerOpen
+                      ? Icons.arrow_drop_up
+                      : Icons.arrow_drop_down,
+                  color: Colors.grey,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_categoryPickerOpen)
+          Container(
+            constraints: const BoxConstraints(maxHeight: 200),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(4),
+                bottomRight: Radius.circular(4),
+              ),
+            ),
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (_) => true,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final cat in _categories)
+                      ListTile(
+                        dense: true,
+                        leading: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: Color(cat.colorValue),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        title: Text(
+                          context.l10n.localizeCategory(cat.name),
+                          style: TextStyle(
+                            fontWeight: cat.id == _selectedCategoryId
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                        ),
+                        trailing: cat.id == _selectedCategoryId
+                            ? const Icon(
+                                Icons.check,
+                                size: 16,
+                                color: AppColors.primary,
+                              )
+                            : null,
+                        onTap: () => setState(() {
+                          _selectedCategoryId = cat.id;
+                          _categoryPickerOpen = false;
+                        }),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   Future<void> _save() async {
     final name = _nameController.text.trim();
     if (name.isEmpty || _selectedCategoryId == null) return;
@@ -115,14 +238,11 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = context.read<CategoryRepository>().getAll();
-
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Top bar
           Padding(
@@ -196,7 +316,33 @@ class _AddItemScreenState extends State<AddItemScreen> {
               ],
             ),
           ),
-          // Expanded options
+          // Category — always visible
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  context.l10n.kategorie,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (_categories.isEmpty)
+                  const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  _buildCategoryDropdown(),
+              ],
+            ),
+          ),
+          // Expanded options (unit + image)
           if (_showMore) ...[
             const SizedBox(height: 16),
             Padding(
@@ -204,6 +350,32 @@ class _AddItemScreenState extends State<AddItemScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text(
+                    context.l10n.einheit,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: AppStrings.units.map((unit) {
+                      final selected = unit == _selectedUnit;
+                      return ChoiceChip(
+                        label: Text(context.l10n.localizeUnit(unit)),
+                        selected: selected,
+                        onSelected: (_) => setState(() => _selectedUnit = unit),
+                        selectedColor: AppColors.primary,
+                        labelStyle: TextStyle(
+                          color: selected
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
                   Text(
                     context.l10n.produktbild,
                     style: const TextStyle(
@@ -239,82 +411,16 @@ class _AddItemScreenState extends State<AddItemScreen> {
                             ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    context.l10n.einheit,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: AppStrings.units.map((unit) {
-                      final selected = unit == _selectedUnit;
-                      return ChoiceChip(
-                        label: Text(context.l10n.localizeUnit(unit)),
-                        selected: selected,
-                        onSelected: (_) => setState(() => _selectedUnit = unit),
-                        selectedColor: AppColors.primary,
-                        labelStyle: TextStyle(
-                          color: selected
-                              ? Colors.white
-                              : AppColors.textPrimary,
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    context.l10n.kategorie,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedCategoryId,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                    items: categories.map((cat) {
-                      return DropdownMenuItem(
-                        value: cat.id,
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 12,
-                              height: 12,
-                              decoration: BoxDecoration(
-                                color: Color(cat.colorValue),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(context.l10n.localizeCategory(cat.name)),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (val) =>
-                        setState(() => _selectedCategoryId = val),
-                  ),
                 ],
               ),
             ),
           ],
-          const SizedBox(height: 24),
           if (_nameController.text.isEmpty)
             Padding(
-              padding: const EdgeInsets.only(bottom: 48),
+              padding: const EdgeInsets.only(top: 24, bottom: 24),
               child: Text(
                 context.l10n.produkttitelHinweis,
+                textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 15,

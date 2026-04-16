@@ -37,7 +37,7 @@ class ShoppingListRepository {
   }
 
   Future<void> update(ShoppingListModel list) async {
-    await list.save();
+    await _box.put(list.id, list);
   }
 
   Future<void> delete(String id) async {

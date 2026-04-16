@@ -75,5 +75,34 @@
     "placeholders": {
       "email": { "type": "String" }
     }
-  }
+  },
+  "familieGruppenTitel": "Meine Familiengruppe",
+  "keinGruppe": "Du bist noch in keiner Familiengruppe",
+  "gruppeErstellen": "Gruppe erstellen",
+  "gruppenname": "Gruppenname",
+  "mitgliedEinladen": "Mitglied einladen",
+  "einladungPerEmail": "Per E-Mail einladen",
+  "gruppeEinladenHint": "E-Mail zum Einladen eingeben",
+  "mitglieder": "Mitglieder",
+  "gruppeVerlassen": "Gruppe verlassen",
+  "gruppeVerlassenBestaetigung": "Möchtest du diese Gruppe wirklich verlassen?",
+  "listenTeilen": "Mit Gruppe teilen",
+  "listenTeilenStop": "Teilen beenden",
+  "listGeteilt": "Mit Gruppe geteilt",
+  "einladungAusstehend": "Ausstehend",
+  "einladungAnnehmen": "Einladung annehmen",
+  "einladungErhalten": "Du wurdest zu {groupName} eingeladen",
+  "@einladungErhalten": {
+    "placeholders": {
+      "groupName": { "type": "String" }
+    }
+  },
+  "adminLabel": "Admin",
+  "memberLabel": "Mitglied",
+  "wiederholen": "Wiederholen",
+  "gruppeLoeschen": "Gruppe löschen",
+  "gruppeLoeschenBestaetigung": "Gruppe löschen und alle Mitglieder entfernen?",
+  "gruppeUnbekannt": "Unbekannte Gruppe",
+  "fehlerAufgetreten": "Ein Fehler ist aufgetreten. Bitte erneut versuchen.",
+  "mitgliedEntfernen": "Mitglied entfernen"
 }

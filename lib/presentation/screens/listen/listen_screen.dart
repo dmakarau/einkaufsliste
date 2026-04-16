@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/extensions/build_context_extensions.dart';
+import '../../../data/models/shopping_list_model.dart';
 import '../../../data/repositories/shopping_item_repository.dart';
+import '../../blocs/family/family_cubit.dart';
 import '../../blocs/shopping_item/shopping_item_cubit.dart';
 import '../../blocs/shopping_item/shopping_item_state.dart';
 import '../../blocs/shopping_list/shopping_list_cubit.dart';
@@ -114,6 +116,7 @@ class _ListenScreenState extends State<ListenScreen> {
                     onTap: () => context.push('/listen/${list.id}'),
                     onDelete: () =>
                         context.read<ShoppingListCubit>().deleteList(list.id),
+                    onLongPress: () => _showShareMenu(context, list),
                   );
                 },
               ),
@@ -121,6 +124,45 @@ class _ListenScreenState extends State<ListenScreen> {
           }
           return const SizedBox.shrink();
         },
+      ),
+    );
+  }
+
+  void _showShareMenu(BuildContext context, ShoppingListModel list) {
+    final familyState = context.read<FamilyCubit>().state;
+    if (familyState is! FamilyHasGroup) {
+      return; // not in a group — nothing to show
+    }
+
+    final groupId = familyState.group.id;
+    final listCubit = context.read<ShoppingListCubit>();
+
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(
+                list.isShared ? Icons.group_off_outlined : Icons.group_outlined,
+              ),
+              title: Text(
+                list.isShared
+                    ? context.l10n.listenTeilenStop
+                    : context.l10n.listenTeilen,
+              ),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                if (list.isShared) {
+                  listCubit.unshareList(list.id);
+                } else {
+                  listCubit.shareList(list.id, groupId);
+                }
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -15,12 +15,14 @@ import 'data/models/shopping_item_model.dart';
 import 'data/models/shopping_list_model.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/repositories/category_repository.dart';
+import 'data/repositories/family_group_repository.dart';
 import 'data/repositories/shopping_item_repository.dart';
 import 'data/repositories/shopping_list_repository.dart';
 import 'data/services/supabase_sync_service.dart';
 import 'l10n/app_localizations.dart';
 import 'presentation/blocs/auth/auth_cubit.dart';
 import 'presentation/blocs/auth/auth_state.dart';
+import 'presentation/blocs/family/family_cubit.dart';
 import 'presentation/blocs/settings/settings_cubit.dart';
 import 'presentation/blocs/settings/settings_state.dart';
 import 'presentation/blocs/shopping_item/shopping_item_cubit.dart';
@@ -107,6 +109,7 @@ class EinkaufslisteApp extends StatelessWidget {
     final client = Supabase.instance.client;
     final authRepo = AuthRepository(client);
     final syncService = SupabaseSyncService(client);
+    final familyGroupRepo = FamilyGroupRepository(client);
 
     return MultiRepositoryProvider(
       providers: [
@@ -115,6 +118,7 @@ class EinkaufslisteApp extends StatelessWidget {
         RepositoryProvider.value(value: catRepo),
         RepositoryProvider.value(value: authRepo),
         RepositoryProvider.value(value: syncService),
+        RepositoryProvider.value(value: familyGroupRepo),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -128,9 +132,16 @@ class EinkaufslisteApp extends StatelessWidget {
             )..checkAuthStatus(),
           ),
           BlocProvider(
+            create: (_) => FamilyCubit(
+              familyGroupRepository: familyGroupRepo,
+              authRepository: authRepo,
+            ),
+          ),
+          BlocProvider(
             create: (_) => ShoppingListCubit(
               listRepository: listRepo,
               itemRepository: itemRepo,
+              categoryRepository: catRepo,
               syncService: syncService,
             )..loadLists(),
           ),
@@ -143,32 +154,102 @@ class EinkaufslisteApp extends StatelessWidget {
           BlocProvider(create: (_) => SettingsCubit()),
         ],
         child: BlocBuilder<SettingsCubit, SettingsState>(
-          builder: (context, settings) => BlocListener<AuthCubit, AuthState>(
-            listener: (context, state) async {
-              final listCubit = context.read<ShoppingListCubit>();
-              final itemCubit = context.read<ShoppingItemCubit>();
-              if (state is AuthUnauthenticated) {
-                // Restore default local data so the app works offline.
-                await _seedDefaultData();
-              }
-              if (state is AuthAuthenticated || state is AuthUnauthenticated) {
-                listCubit.loadLists();
-                itemCubit.clearItems();
-              }
-            },
-            child: MaterialApp.router(
-              title: 'Einkaufsliste',
-              theme: AppTheme.light,
-              routerConfig: appRouter,
-              debugShowCheckedModeBanner: false,
-              locale: settings.languageCode != null
-                  ? Locale(settings.languageCode!)
-                  : null,
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-            ),
-          ),
+          builder: (context, settings) => _AppContent(settings: settings),
         ),
+      ),
+    );
+  }
+}
+
+class _AppContent extends StatefulWidget {
+  const _AppContent({required this.settings});
+
+  final SettingsState settings;
+
+  @override
+  State<_AppContent> createState() => _AppContentState();
+}
+
+class _AppContentState extends State<_AppContent> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<ShoppingListCubit>().syncFromRemote();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = widget.settings;
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<AuthCubit, AuthState>(
+          // Only react to genuine auth transitions, not token refreshes
+          // (which re-emit AuthAuthenticated without changing the state type).
+          listenWhen: (previous, current) =>
+              previous.runtimeType != current.runtimeType,
+          listener: (context, state) async {
+            final listCubit = context.read<ShoppingListCubit>();
+            final itemCubit = context.read<ShoppingItemCubit>();
+            final familyCubit = context.read<FamilyCubit>();
+            if (state is AuthUnauthenticated) {
+              // Restore default local data so the app works offline.
+              await _seedDefaultData();
+              listCubit.stopWatching();
+            }
+            if (state is AuthAuthenticated) {
+              // pullAll() may have cleared categories if Supabase had none
+              // (e.g. fresh install — seeded defaults were never pushed up).
+              // Re-seed only if the box is empty; safe to call anytime.
+              await _seedDefaultData();
+              familyCubit.loadGroupStatus();
+            }
+            if (state is AuthAuthenticated || state is AuthUnauthenticated) {
+              listCubit.loadLists();
+              itemCubit.clearItems();
+            }
+          },
+        ),
+        BlocListener<FamilyCubit, FamilyState>(
+          // Only wire up watchGroup on the first transition into FamilyHasGroup.
+          // Repeated FamilyHasGroup emissions (e.g. after inviteMember refreshes
+          // the member list) must not tear down and re-subscribe the channel.
+          listenWhen: (prev, curr) =>
+              (curr is FamilyHasGroup && prev is! FamilyHasGroup) ||
+              curr is FamilyNoGroup,
+          listener: (context, state) {
+            final listCubit = context.read<ShoppingListCubit>();
+            if (state is FamilyHasGroup) {
+              listCubit.watchGroup(state.group.id);
+              listCubit.loadLists();
+            } else if (state is FamilyNoGroup) {
+              listCubit.stopWatching();
+            }
+          },
+        ),
+      ],
+      child: MaterialApp.router(
+        title: 'Einkaufsliste',
+        theme: AppTheme.light,
+        routerConfig: appRouter,
+        debugShowCheckedModeBanner: false,
+        locale: settings.languageCode != null
+            ? Locale(settings.languageCode!)
+            : null,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
       ),
     );
   }

@@ -46,8 +46,7 @@ class _FakeAuthRepository implements AuthRepository {
       _signInError = AuthRepositoryException(message);
   void failSignUpWith(String message) =>
       _signUpError = AuthRepositoryException(message);
-  void failSignOutWith(String message) =>
-      _signOutError = Exception(message);
+  void failSignOutWith(String message) => _signOutError = Exception(message);
   Future<void> dispose() => _controller.close();
 }
 
@@ -65,6 +64,9 @@ void main() {
     itemRepo = MockShoppingItemRepository();
     catRepo = MockCategoryRepository();
     sync = FakeSyncService();
+    // AuthCubit._onAuthStateChanged calls _catRepo.getAll() for the bootstrap
+    // push after pullAll. Stub it to return empty so no MissingStubError fires.
+    when(() => catRepo.getAll()).thenReturn([]);
     cubit = AuthCubit(
       authRepository: authRepo,
       syncService: sync,
@@ -117,7 +119,10 @@ void main() {
 
       final expectation = expectLater(
         cubit.stream,
-        emitsInOrder([const AuthLoading(), const AuthError('Invalid credentials')]),
+        emitsInOrder([
+          const AuthLoading(),
+          const AuthError('Invalid credentials'),
+        ]),
       );
 
       await cubit.signIn(email: 'test@test.com', password: 'wrong');
@@ -157,24 +162,28 @@ void main() {
   });
 
   group('signOut', () {
-    test('emits AuthLoading then AuthUnauthenticated and clears repos', () async {
-      when(() => listRepo.clearAll()).thenAnswer((_) async {});
-      when(() => itemRepo.clearAll()).thenAnswer((_) async {});
-      when(() => catRepo.clearAll()).thenAnswer((_) async {});
+    test(
+      'emits AuthLoading then AuthUnauthenticated and clears list and item repos',
+      () async {
+        when(() => listRepo.clearAll()).thenAnswer((_) async {});
+        when(() => itemRepo.clearAll()).thenAnswer((_) async {});
 
-      final expectation = expectLater(
-        cubit.stream,
-        emitsInOrder([const AuthLoading(), const AuthUnauthenticated()]),
-      );
+        final expectation = expectLater(
+          cubit.stream,
+          emitsInOrder([const AuthLoading(), const AuthUnauthenticated()]),
+        );
 
-      await cubit.signOut();
-      authRepo.emitUser(null);
+        await cubit.signOut();
+        authRepo.emitUser(null);
 
-      await expectation;
-      verify(() => listRepo.clearAll()).called(1);
-      verify(() => itemRepo.clearAll()).called(1);
-      verify(() => catRepo.clearAll()).called(1);
-    });
+        await expectation;
+        verify(() => listRepo.clearAll()).called(1);
+        verify(() => itemRepo.clearAll()).called(1);
+        // Categories are intentionally NOT cleared on sign-out (iOS race condition
+        // fix: Supabase fires a spurious null auth event before restoring the session).
+        verifyNever(() => catRepo.clearAll());
+      },
+    );
 
     test('emits AuthLoading then AuthError on signOut failure', () async {
       authRepo.failSignOutWith('Network error');
@@ -191,34 +200,39 @@ void main() {
   });
 
   group('auth state stream', () {
-    test('calls pullAll and emits AuthAuthenticated when user arrives', () async {
-      final expectation = expectLater(
-        cubit.stream,
-        emits(isA<AuthAuthenticated>()),
-      );
+    test(
+      'calls pullAll and emits AuthAuthenticated when user arrives',
+      () async {
+        final expectation = expectLater(
+          cubit.stream,
+          emits(isA<AuthAuthenticated>()),
+        );
 
-      authRepo.emitUser(const AppUser(id: 'user-1', email: 'test@test.com'));
+        authRepo.emitUser(const AppUser(id: 'user-1', email: 'test@test.com'));
 
-      await expectation;
-      expect(sync.pullAllCalled, 1);
-    });
+        await expectation;
+        expect(sync.pullAllCalled, 1);
+      },
+    );
 
-    test('clears repos and emits AuthUnauthenticated when user leaves', () async {
-      when(() => listRepo.clearAll()).thenAnswer((_) async {});
-      when(() => itemRepo.clearAll()).thenAnswer((_) async {});
-      when(() => catRepo.clearAll()).thenAnswer((_) async {});
+    test(
+      'clears list and item repos and emits AuthUnauthenticated when user leaves',
+      () async {
+        when(() => listRepo.clearAll()).thenAnswer((_) async {});
+        when(() => itemRepo.clearAll()).thenAnswer((_) async {});
 
-      final expectation = expectLater(
-        cubit.stream,
-        emits(const AuthUnauthenticated()),
-      );
+        final expectation = expectLater(
+          cubit.stream,
+          emits(const AuthUnauthenticated()),
+        );
 
-      authRepo.emitUser(null);
+        authRepo.emitUser(null);
 
-      await expectation;
-      verify(() => listRepo.clearAll()).called(1);
-      verify(() => itemRepo.clearAll()).called(1);
-      verify(() => catRepo.clearAll()).called(1);
-    });
+        await expectation;
+        verify(() => listRepo.clearAll()).called(1);
+        verify(() => itemRepo.clearAll()).called(1);
+        verifyNever(() => catRepo.clearAll());
+      },
+    );
   });
 }

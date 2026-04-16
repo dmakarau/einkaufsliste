@@ -122,36 +122,40 @@ class _AllgemeinScreenState extends State<AllgemeinScreen> {
                 );
               }
               final categoryRepo = context.read<CategoryRepository>();
-              return ListView.separated(
-                itemCount: items.length,
-                separatorBuilder: (_, _) => const Divider(indent: 72),
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  final category = categoryRepo.getById(item.categoryId);
-                  return Dismissible(
-                    key: ValueKey(item.id),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      color: Colors.red,
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: const Icon(
-                        Icons.delete_outline,
-                        color: Colors.white,
+              return RefreshIndicator(
+                onRefresh: () =>
+                    context.read<ShoppingListCubit>().syncFromRemote(),
+                child: ListView.separated(
+                  itemCount: items.length,
+                  separatorBuilder: (_, _) => const Divider(indent: 72),
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    final category = categoryRepo.getById(item.categoryId);
+                    return Dismissible(
+                      key: ValueKey(item.id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        color: Colors.red,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                    onDismissed: (_) =>
-                        context.read<ShoppingItemCubit>().deleteItem(item.id),
-                    child: ShoppingItemTile(
-                      item: item,
-                      category: category,
-                      onToggle: () => context
-                          .read<ShoppingItemCubit>()
-                          .toggleChecked(item.id),
-                      onTap: () {},
-                    ),
-                  );
-                },
+                      onDismissed: (_) =>
+                          context.read<ShoppingItemCubit>().deleteItem(item.id),
+                      child: ShoppingItemTile(
+                        item: item,
+                        category: category,
+                        onToggle: () => context
+                            .read<ShoppingItemCubit>()
+                            .toggleChecked(item.id),
+                        onTap: () {},
+                      ),
+                    );
+                  },
+                ),
               );
             }
             return const SizedBox.shrink();
@@ -163,7 +167,7 @@ class _AllgemeinScreenState extends State<AllgemeinScreen> {
 
   void _showAddItem(BuildContext context) {
     if (_defaultListId == null) return;
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,

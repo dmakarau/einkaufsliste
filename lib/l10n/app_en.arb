@@ -75,5 +75,34 @@
     "placeholders": {
       "email": { "type": "String" }
     }
-  }
+  },
+  "familieGruppenTitel": "My Family Group",
+  "keinGruppe": "You're not in a family group yet",
+  "gruppeErstellen": "Create group",
+  "gruppenname": "Group name",
+  "mitgliedEinladen": "Invite member",
+  "einladungPerEmail": "Invite by e-mail",
+  "gruppeEinladenHint": "Enter e-mail to invite",
+  "mitglieder": "Members",
+  "gruppeVerlassen": "Leave group",
+  "gruppeVerlassenBestaetigung": "Are you sure you want to leave this group?",
+  "listenTeilen": "Share with group",
+  "listenTeilenStop": "Stop sharing",
+  "listGeteilt": "Shared with group",
+  "einladungAusstehend": "Pending",
+  "einladungAnnehmen": "Accept invitation",
+  "einladungErhalten": "You've been invited to join {groupName}",
+  "@einladungErhalten": {
+    "placeholders": {
+      "groupName": { "type": "String" }
+    }
+  },
+  "adminLabel": "Admin",
+  "memberLabel": "Member",
+  "wiederholen": "Retry",
+  "gruppeLoeschen": "Delete group",
+  "gruppeLoeschenBestaetigung": "Delete the group and remove all members?",
+  "gruppeUnbekannt": "Unknown group",
+  "fehlerAufgetreten": "An error occurred. Please try again.",
+  "mitgliedEntfernen": "Remove member"
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shopping_list/data/models/category_model.dart';
 import 'package:shopping_list/data/models/shopping_item_model.dart';
@@ -15,10 +16,12 @@ class FakeSyncService extends Fake implements SyncService {
   final deletedListIds = <String>[];
   final pushedItems = <ShoppingItemModel>[];
   final deletedItemIds = <String>[];
+  final sharedListIds = <String>[];
+  final unsharedListIds = <String>[];
   int pullAllCalled = 0;
-
   @override
-  bool get isAuthenticated => false;
+  bool isAuthenticated = false;
+  bool shouldThrowOnPullAll = false;
 
   @override
   Future<void> pullAll({
@@ -26,6 +29,7 @@ class FakeSyncService extends Fake implements SyncService {
     required ShoppingItemRepository itemRepo,
     required CategoryRepository catRepo,
   }) async {
+    if (shouldThrowOnPullAll) throw Exception('Supabase error');
     pullAllCalled++;
   }
 
@@ -46,11 +50,26 @@ class FakeSyncService extends Fake implements SyncService {
 
   @override
   Future<void> deleteCategory(String id) async {}
+
+  @override
+  Future<void> shareList(String listId, String groupId) async =>
+      sharedListIds.add(listId);
+
+  @override
+  Future<void> unshareList(String listId) async => unsharedListIds.add(listId);
+
+  @override
+  void subscribeToGroupChanges(String groupId, VoidCallback onChanged) {}
+
+  @override
+  void unsubscribeGroupChanges() {}
 }
 
-class MockShoppingListRepository extends Mock implements ShoppingListRepository {}
+class MockShoppingListRepository extends Mock
+    implements ShoppingListRepository {}
 
-class MockShoppingItemRepository extends Mock implements ShoppingItemRepository {}
+class MockShoppingItemRepository extends Mock
+    implements ShoppingItemRepository {}
 
 /// NOTE: Do NOT use MockAuthRepository for AuthCubit tests.
 /// AuthCubit subscribes to authStateStream in its constructor; mocktail enters

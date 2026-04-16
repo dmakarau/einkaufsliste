@@ -9,6 +9,7 @@ class ShoppingListTile extends StatelessWidget {
     required this.itemCount,
     required this.onTap,
     this.onDelete,
+    this.onLongPress,
     this.isEditing = false,
   });
 
@@ -16,6 +17,7 @@ class ShoppingListTile extends StatelessWidget {
   final int itemCount;
   final VoidCallback onTap;
   final VoidCallback? onDelete;
+  final VoidCallback? onLongPress;
   final bool isEditing;
 
   @override
@@ -33,6 +35,11 @@ class ShoppingListTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (list.isShared)
+            const Padding(
+              padding: EdgeInsets.only(right: 4),
+              child: Icon(Icons.group, size: 16, color: AppColors.primary),
+            ),
           if (!isEditing)
             Text(
               '$itemCount',
@@ -50,6 +57,7 @@ class ShoppingListTile extends StatelessWidget {
         ],
       ),
       onTap: onTap,
+      onLongPress: onLongPress,
     );
   }
 }

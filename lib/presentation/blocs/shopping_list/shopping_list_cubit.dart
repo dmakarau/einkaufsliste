@@ -4,8 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 import '../../../data/models/shopping_list_model.dart';
-import '../../../data/repositories/shopping_list_repository.dart';
+import '../../../data/repositories/category_repository.dart';
 import '../../../data/repositories/shopping_item_repository.dart';
+import '../../../data/repositories/shopping_list_repository.dart';
 import '../../../data/services/sync_service.dart';
 import 'shopping_list_state.dart';
 
@@ -13,14 +14,17 @@ class ShoppingListCubit extends Cubit<ShoppingListState> {
   ShoppingListCubit({
     required ShoppingListRepository listRepository,
     required ShoppingItemRepository itemRepository,
+    required CategoryRepository categoryRepository,
     required SyncService syncService,
   }) : _listRepo = listRepository,
        _itemRepo = itemRepository,
+       _catRepo = categoryRepository,
        _sync = syncService,
        super(const ShoppingListLoading());
 
   final ShoppingListRepository _listRepo;
   final ShoppingItemRepository _itemRepo;
+  final CategoryRepository _catRepo;
   final SyncService _sync;
   final _uuid = const Uuid();
 
@@ -51,10 +55,10 @@ class ShoppingListCubit extends Cubit<ShoppingListState> {
   Future<void> renameList(String id, String newName) async {
     final list = _listRepo.getById(id);
     if (list == null) return;
-    list.name = newName;
-    await _listRepo.update(list);
+    final updated = list.copyWith(name: newName);
+    await _listRepo.update(updated);
     unawaited(
-      _sync.pushList(list).catchError((Object e, StackTrace s) {
+      _sync.pushList(updated).catchError((Object e, StackTrace s) {
         debugPrint('[SyncService] pushList error: $e\n$s');
       }),
     );
@@ -71,6 +75,66 @@ class ShoppingListCubit extends Cubit<ShoppingListState> {
         debugPrint('[SyncService] deleteList error: $e\n$s');
       }),
     );
+    loadLists();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Family group sharing
+  // ---------------------------------------------------------------------------
+
+  Future<void> shareList(String listId, String groupId) async {
+    final list = _listRepo.getById(listId);
+    if (list == null) return;
+    final updated = list.copyWith(familyGroupId: groupId);
+    await _listRepo.update(updated);
+    unawaited(
+      _sync.shareList(listId, groupId).catchError((Object e, StackTrace s) {
+        debugPrint('[SyncService] shareList error: $e\n$s');
+      }),
+    );
+    loadLists();
+  }
+
+  Future<void> unshareList(String listId) async {
+    final list = _listRepo.getById(listId);
+    if (list == null) return;
+    final updated = list.copyWith(clearFamilyGroupId: true);
+    await _listRepo.update(updated);
+    unawaited(
+      _sync.unshareList(listId).catchError((Object e, StackTrace s) {
+        debugPrint('[SyncService] unshareList error: $e\n$s');
+      }),
+    );
+    loadLists();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Realtime group subscription
+  // ---------------------------------------------------------------------------
+
+  void watchGroup(String groupId) {
+    _sync.subscribeToGroupChanges(groupId, _onGroupChange);
+  }
+
+  Future<void> _onGroupChange() async => syncFromRemote();
+
+  void stopWatching() {
+    _sync.unsubscribeGroupChanges();
+  }
+
+  /// Pulls all data from Supabase into Hive, then reloads the list state.
+  /// No-op when the user is not authenticated.
+  Future<void> syncFromRemote() async {
+    if (!_sync.isAuthenticated) return;
+    try {
+      await _sync.pullAll(
+        listRepo: _listRepo,
+        itemRepo: _itemRepo,
+        catRepo: _catRepo,
+      );
+    } catch (e, s) {
+      debugPrint('[SyncService] syncFromRemote error: $e\n$s');
+    }
     loadLists();
   }
 }

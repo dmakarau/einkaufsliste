@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../data/models/auth_user.dart';
@@ -41,12 +42,23 @@ class AuthCubit extends Cubit<AuthState> {
         itemRepo: _itemRepo,
         catRepo: _catRepo,
       );
+      // Bootstrap: if pullAll found no categories in Supabase, the local seeded
+      // defaults were preserved. Push them up so they sync to other devices.
+      for (final cat in _catRepo.getAll()) {
+        unawaited(
+          _sync.pushCategory(cat).catchError((Object e, StackTrace s) {
+            debugPrint('[SyncService] pushCategory error: $e\n$s');
+          }),
+        );
+      }
       emit(AuthAuthenticated(user));
     } else {
-      // Clear Hive before emitting so loadLists() sees empty boxes.
+      // Clear lists and items so loadLists() sees empty boxes after sign-out.
+      // Categories are NOT cleared: the 13 defaults are always needed for the
+      // add-item sheet, and pullAll() will replace them with the correct user's
+      // categories on next sign-in anyway.
       await _listRepo.clearAll();
       await _itemRepo.clearAll();
-      await _catRepo.clearAll();
       emit(const AuthUnauthenticated());
     }
   }

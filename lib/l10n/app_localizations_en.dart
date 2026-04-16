@@ -223,4 +223,80 @@ class AppLocalizationsEn extends AppLocalizations {
   String welcomeUser(String email) {
     return 'Welcome, $email!';
   }
+
+  @override
+  String get familieGruppenTitel => 'My Family Group';
+
+  @override
+  String get keinGruppe => 'You\'re not in a family group yet';
+
+  @override
+  String get gruppeErstellen => 'Create group';
+
+  @override
+  String get gruppenname => 'Group name';
+
+  @override
+  String get mitgliedEinladen => 'Invite member';
+
+  @override
+  String get einladungPerEmail => 'Invite by e-mail';
+
+  @override
+  String get gruppeEinladenHint => 'Enter e-mail to invite';
+
+  @override
+  String get mitglieder => 'Members';
+
+  @override
+  String get gruppeVerlassen => 'Leave group';
+
+  @override
+  String get gruppeVerlassenBestaetigung =>
+      'Are you sure you want to leave this group?';
+
+  @override
+  String get listenTeilen => 'Share with group';
+
+  @override
+  String get listenTeilenStop => 'Stop sharing';
+
+  @override
+  String get listGeteilt => 'Shared with group';
+
+  @override
+  String get einladungAusstehend => 'Pending';
+
+  @override
+  String get einladungAnnehmen => 'Accept invitation';
+
+  @override
+  String einladungErhalten(String groupName) {
+    return 'You\'ve been invited to join $groupName';
+  }
+
+  @override
+  String get adminLabel => 'Admin';
+
+  @override
+  String get memberLabel => 'Member';
+
+  @override
+  String get wiederholen => 'Retry';
+
+  @override
+  String get gruppeLoeschen => 'Delete group';
+
+  @override
+  String get gruppeLoeschenBestaetigung =>
+      'Delete the group and remove all members?';
+
+  @override
+  String get gruppeUnbekannt => 'Unknown group';
+
+  @override
+  String get fehlerAufgetreten => 'An error occurred. Please try again.';
+
+  @override
+  String get mitgliedEntfernen => 'Remove member';
 }

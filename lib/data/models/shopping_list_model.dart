@@ -8,7 +8,7 @@ class ShoppingListModel extends HiveObject {
   final String id;
 
   @HiveField(1)
-  String name;
+  final String name;
 
   @HiveField(2)
   final bool isDefault;
@@ -16,10 +16,33 @@ class ShoppingListModel extends HiveObject {
   @HiveField(3)
   final DateTime createdAt;
 
+  @HiveField(4)
+  final String? familyGroupId;
+
   ShoppingListModel({
     required this.id,
     required this.name,
     this.isDefault = false,
     required this.createdAt,
+    this.familyGroupId,
   });
+
+  bool get isShared => familyGroupId != null;
+
+  ShoppingListModel copyWith({
+    String? name,
+    bool? isDefault,
+    String? familyGroupId,
+    bool clearFamilyGroupId = false,
+  }) {
+    return ShoppingListModel(
+      id: id,
+      name: name ?? this.name,
+      isDefault: isDefault ?? this.isDefault,
+      createdAt: createdAt,
+      familyGroupId: clearFamilyGroupId
+          ? null
+          : (familyGroupId ?? this.familyGroupId),
+    );
+  }
 }

@@ -1,4 +1,6 @@
 import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/category_model.dart';
@@ -10,9 +12,10 @@ import '../repositories/shopping_list_repository.dart';
 import 'sync_service.dart';
 
 class SupabaseSyncService implements SyncService {
-  const SupabaseSyncService(this._client);
+  SupabaseSyncService(this._client);
 
   final SupabaseClient _client;
+  RealtimeChannel? _groupChannel;
 
   String? get _uid => _client.auth.currentUser?.id;
 
@@ -22,7 +25,7 @@ class SupabaseSyncService implements SyncService {
   // ---------------------------------------------------------------------------
   // Pull-all: called on sign-in.
   // Supabase is the source of truth — local offline data is discarded.
-  // Fetch all user data from Supabase and replace Hive contents.
+  // RLS handles access control: returns own lists + group-shared lists.
   // ---------------------------------------------------------------------------
   @override
   Future<void> pullAll({
@@ -33,33 +36,39 @@ class SupabaseSyncService implements SyncService {
     final uid = _uid;
     if (uid == null) return;
 
-    // Fetch from Supabase
-    final listsData =
-        await _client.from('shopping_lists').select().eq('owner_id', uid)
-            as List<dynamic>;
+    // Lists and items: no owner_id filter — RLS returns own + group-accessible rows.
+    final listsData = await _client.from('shopping_lists').select();
+    final itemsData = await _client.from('shopping_items').select();
+    // Categories are not shared; keep owner filter.
+    final catsData = await _client
+        .from('categories')
+        .select()
+        .eq('owner_id', uid);
 
-    final itemsData =
-        await _client.from('shopping_items').select().eq('owner_id', uid)
-            as List<dynamic>;
+    // Parse all rows into models BEFORE touching Hive.
+    // If any row is malformed this throws here and nothing is cleared.
+    final newLists = listsData.map(_listFromRow).toList();
+    final newItems = itemsData.map(_itemFromRow).toList();
+    final newCats = catsData.map(_catFromRow).toList();
 
-    final catsData =
-        await _client.from('categories').select().eq('owner_id', uid)
-            as List<dynamic>;
-
-    // 3. Replace Hive contents
     await listRepo.clearAll();
-    for (final row in listsData) {
-      await listRepo.add(_listFromRow(row as Map<String, dynamic>));
+    for (final m in newLists) {
+      await listRepo.add(m);
     }
 
     await itemRepo.clearAll();
-    for (final row in itemsData) {
-      await itemRepo.add(_itemFromRow(row as Map<String, dynamic>));
+    for (final m in newItems) {
+      await itemRepo.add(m);
     }
 
-    await catRepo.clearAll();
-    for (final row in catsData) {
-      await catRepo.add(_catFromRow(row as Map<String, dynamic>));
+    // Only replace local categories if Supabase actually has some.
+    // If Supabase returns 0 (fresh account), keep the locally seeded defaults
+    // so the category picker is never empty.
+    if (newCats.isNotEmpty) {
+      await catRepo.clearAll();
+      for (final m in newCats) {
+        await catRepo.add(m);
+      }
     }
   }
 
@@ -74,6 +83,7 @@ class SupabaseSyncService implements SyncService {
     await _client.from('shopping_lists').upsert({
       'id': list.id,
       'owner_id': uid,
+      'family_group_id': list.familyGroupId,
       'name': list.name,
       'is_default': list.isDefault,
       'created_at': list.createdAt.toUtc().toIso8601String(),
@@ -157,6 +167,68 @@ class SupabaseSyncService implements SyncService {
   }
 
   // ---------------------------------------------------------------------------
+  // Family group sharing
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<void> shareList(String listId, String groupId) async {
+    if (!isAuthenticated) return;
+    await _client
+        .from('shopping_lists')
+        .update({'family_group_id': groupId})
+        .eq('id', listId);
+  }
+
+  @override
+  Future<void> unshareList(String listId) async {
+    if (!isAuthenticated) return;
+    await _client
+        .from('shopping_lists')
+        .update({'family_group_id': null})
+        .eq('id', listId);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Realtime subscription for group changes
+  // ---------------------------------------------------------------------------
+
+  @override
+  void subscribeToGroupChanges(String groupId, VoidCallback onChanged) {
+    unsubscribeGroupChanges();
+    _groupChannel = _client
+        .channel('group_$groupId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'shopping_lists',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'family_group_id',
+            value: groupId,
+          ),
+          callback: (_) => onChanged(),
+        )
+        // shopping_items has no family_group_id column so no column filter is
+        // possible here. Any item change triggers onChanged(); RLS limits what
+        // pullAll() actually fetches.
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'shopping_items',
+          callback: (_) => onChanged(),
+        )
+        .subscribe();
+  }
+
+  @override
+  void unsubscribeGroupChanges() {
+    if (_groupChannel != null) {
+      _client.removeChannel(_groupChannel!);
+      _groupChannel = null;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // JSON → model helpers
   // ---------------------------------------------------------------------------
 
@@ -166,6 +238,7 @@ class SupabaseSyncService implements SyncService {
       name: row['name'] as String,
       isDefault: row['is_default'] as bool,
       createdAt: DateTime.parse(row['created_at'] as String),
+      familyGroupId: row['family_group_id'] as String?,
     );
   }
 

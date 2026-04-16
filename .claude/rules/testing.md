@@ -4,12 +4,12 @@
 
 | Cubit | File | Notes |
 |-------|------|-------|
-| `ShoppingListCubit` | `test/blocs/shopping_list_cubit_test.dart` | Full method coverage |
+| `ShoppingListCubit` | `test/blocs/shopping_list_cubit_test.dart` | Covers core CRUD + `shareList`, `unshareList`, `syncFromRemote`; `watchGroup`/`stopWatching` not tested |
 | `ShoppingItemCubit` | `test/blocs/shopping_item_cubit_test.dart` | Full method coverage |
 | `AuthCubit` | `test/blocs/auth_cubit_test.dart` | Uses `_FakeAuthRepository` — see below |
 | `SettingsCubit` | `test/blocs/settings_cubit_test.dart` | Uses real Hive in temp dir — see below |
 
-**Not unit tested:** `AuthRepository` and `SupabaseSyncService` wrap Supabase directly with no injection point. Testing them requires a live Supabase instance.
+**Not unit tested:** `AuthRepository`, `SupabaseSyncService`, `FamilyGroupRepository`, and `FamilyCubit` wrap Supabase directly with no injection point. Testing them requires a live Supabase instance.
 
 ---
 
@@ -17,7 +17,7 @@
 
 | Helper | Purpose |
 |--------|---------|
-| `FakeSyncService` | Captures push/delete calls; no network. Tracks `pullAllCalled` counter. |
+| `FakeSyncService` | Captures push/delete/share/unshare calls; no network. Tracks `pullAllCalled` counter. Stubs `subscribeToGroupChanges`/`unsubscribeGroupChanges` as no-ops. |
 | `MockShoppingListRepository` | Mocktail mock |
 | `MockShoppingItemRepository` | Mocktail mock |
 | `MockCategoryRepository` | Mocktail mock |

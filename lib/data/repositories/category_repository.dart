@@ -32,5 +32,7 @@ class CategoryRepository {
 
   bool isEmpty() => _box.isEmpty;
 
+  Stream<void> watch() => _box.watch();
+
   Future<void> clearAll() async => _box.clear();
 }

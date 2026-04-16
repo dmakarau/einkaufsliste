@@ -525,6 +525,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Welcome, {email}!'**
   String welcomeUser(String email);
+
+  /// No description provided for @familieGruppenTitel.
+  ///
+  /// In en, this message translates to:
+  /// **'My Family Group'**
+  String get familieGruppenTitel;
+
+  /// No description provided for @keinGruppe.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re not in a family group yet'**
+  String get keinGruppe;
+
+  /// No description provided for @gruppeErstellen.
+  ///
+  /// In en, this message translates to:
+  /// **'Create group'**
+  String get gruppeErstellen;
+
+  /// No description provided for @gruppenname.
+  ///
+  /// In en, this message translates to:
+  /// **'Group name'**
+  String get gruppenname;
+
+  /// No description provided for @mitgliedEinladen.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite member'**
+  String get mitgliedEinladen;
+
+  /// No description provided for @einladungPerEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite by e-mail'**
+  String get einladungPerEmail;
+
+  /// No description provided for @gruppeEinladenHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter e-mail to invite'**
+  String get gruppeEinladenHint;
+
+  /// No description provided for @mitglieder.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get mitglieder;
+
+  /// No description provided for @gruppeVerlassen.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave group'**
+  String get gruppeVerlassen;
+
+  /// No description provided for @gruppeVerlassenBestaetigung.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to leave this group?'**
+  String get gruppeVerlassenBestaetigung;
+
+  /// No description provided for @listenTeilen.
+  ///
+  /// In en, this message translates to:
+  /// **'Share with group'**
+  String get listenTeilen;
+
+  /// No description provided for @listenTeilenStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop sharing'**
+  String get listenTeilenStop;
+
+  /// No description provided for @listGeteilt.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared with group'**
+  String get listGeteilt;
+
+  /// No description provided for @einladungAusstehend.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get einladungAusstehend;
+
+  /// No description provided for @einladungAnnehmen.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept invitation'**
+  String get einladungAnnehmen;
+
+  /// No description provided for @einladungErhalten.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve been invited to join {groupName}'**
+  String einladungErhalten(String groupName);
+
+  /// No description provided for @adminLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin'**
+  String get adminLabel;
+
+  /// No description provided for @memberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Member'**
+  String get memberLabel;
+
+  /// No description provided for @wiederholen.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get wiederholen;
+
+  /// No description provided for @gruppeLoeschen.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete group'**
+  String get gruppeLoeschen;
+
+  /// No description provided for @gruppeLoeschenBestaetigung.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the group and remove all members?'**
+  String get gruppeLoeschenBestaetigung;
+
+  /// No description provided for @gruppeUnbekannt.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown group'**
+  String get gruppeUnbekannt;
+
+  /// No description provided for @fehlerAufgetreten.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred. Please try again.'**
+  String get fehlerAufgetreten;
+
+  /// No description provided for @mitgliedEntfernen.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove member'**
+  String get mitgliedEntfernen;
 }
 
 class _AppLocalizationsDelegate

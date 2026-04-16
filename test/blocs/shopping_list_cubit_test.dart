@@ -9,7 +9,12 @@ import '../helpers/fake_sync_service.dart';
 void main() {
   setUpAll(() {
     registerFallbackValue(
-      ShoppingListModel(id: 'x', name: 'x', isDefault: false, createdAt: DateTime(2024)),
+      ShoppingListModel(
+        id: 'x',
+        name: 'x',
+        isDefault: false,
+        createdAt: DateTime(2024),
+      ),
     );
   });
 
@@ -25,6 +30,7 @@ void main() {
     cubit = ShoppingListCubit(
       listRepository: listRepo,
       itemRepository: itemRepo,
+      categoryRepository: MockCategoryRepository(),
       syncService: sync,
     );
   });
@@ -130,6 +136,96 @@ void main() {
       await cubit.deleteList('missing');
 
       expect(sync.deletedListIds, isEmpty);
+    });
+  });
+
+  group('shareList', () {
+    test('updates repo and syncs share', () async {
+      final list = ShoppingListModel(
+        id: 'list-1',
+        name: 'Test',
+        isDefault: false,
+        createdAt: DateTime(2024),
+      );
+      when(() => listRepo.getById('list-1')).thenReturn(list);
+      when(() => listRepo.update(any())).thenAnswer((_) async {});
+      when(() => listRepo.getAll()).thenReturn([]);
+
+      await cubit.shareList('list-1', 'group-1');
+
+      verify(() => listRepo.update(any())).called(1);
+      expect(sync.sharedListIds, contains('list-1'));
+    });
+
+    test('is no-op when list not found', () async {
+      when(() => listRepo.getById('missing')).thenReturn(null);
+
+      await cubit.shareList('missing', 'group-1');
+
+      verifyNever(() => listRepo.update(any()));
+      expect(sync.sharedListIds, isEmpty);
+    });
+  });
+
+  group('unshareList', () {
+    test('updates repo and syncs unshare', () async {
+      final list = ShoppingListModel(
+        id: 'list-1',
+        name: 'Test',
+        isDefault: false,
+        createdAt: DateTime(2024),
+        familyGroupId: 'group-1',
+      );
+      when(() => listRepo.getById('list-1')).thenReturn(list);
+      when(() => listRepo.update(any())).thenAnswer((_) async {});
+      when(() => listRepo.getAll()).thenReturn([]);
+
+      await cubit.unshareList('list-1');
+
+      verify(() => listRepo.update(any())).called(1);
+      expect(sync.unsharedListIds, contains('list-1'));
+    });
+
+    test('is no-op when list not found', () async {
+      when(() => listRepo.getById('missing')).thenReturn(null);
+
+      await cubit.unshareList('missing');
+
+      verifyNever(() => listRepo.update(any()));
+      expect(sync.unsharedListIds, isEmpty);
+    });
+  });
+
+  group('syncFromRemote', () {
+    test('is no-op when not authenticated', () async {
+      // sync.isAuthenticated defaults to false
+      await cubit.syncFromRemote();
+
+      expect(sync.pullAllCalled, 0);
+      expect(cubit.state, isA<ShoppingListLoading>());
+    });
+
+    test(
+      'calls pullAll and emits ShoppingListLoaded when authenticated',
+      () async {
+        sync.isAuthenticated = true;
+        when(() => listRepo.getAll()).thenReturn([]);
+
+        await cubit.syncFromRemote();
+
+        expect(sync.pullAllCalled, 1);
+        expect(cubit.state, const ShoppingListLoaded([]));
+      },
+    );
+
+    test('still emits ShoppingListLoaded when pullAll throws', () async {
+      sync.isAuthenticated = true;
+      sync.shouldThrowOnPullAll = true;
+      when(() => listRepo.getAll()).thenReturn([]);
+
+      await cubit.syncFromRemote();
+
+      expect(cubit.state, const ShoppingListLoaded([]));
     });
   });
 }

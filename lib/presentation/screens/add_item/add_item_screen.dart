@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -34,7 +33,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
   bool _isPickingImage = false;
 
   List<CategoryModel> _categories = [];
-  StreamSubscription<BoxEvent>? _catSubscription;
+  StreamSubscription<void>? _catSubscription;
 
   @override
   void initState() {

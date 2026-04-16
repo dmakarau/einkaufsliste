@@ -89,7 +89,7 @@ class _AllgemeinScreenState extends State<AllgemeinScreen> {
         listener: (context, state) {
           if (state is ShoppingListLoaded) {
             final def = state.lists.where((l) => l.isDefault).firstOrNull;
-            if (def != null) {
+            if (def != null && def.id != _defaultListId) {
               _defaultListId = def.id;
               context.read<ShoppingItemCubit>().loadItems(def.id);
             }

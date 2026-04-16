@@ -294,4 +294,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gruppeUnbekannt => 'Unbekannte Gruppe';
+
+  @override
+  String get fehlerAufgetreten =>
+      'Ein Fehler ist aufgetreten. Bitte erneut versuchen.';
+
+  @override
+  String get mitgliedEntfernen => 'Mitglied entfernen';
 }

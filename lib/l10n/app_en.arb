@@ -102,5 +102,7 @@
   "wiederholen": "Retry",
   "gruppeLoeschen": "Delete group",
   "gruppeLoeschenBestaetigung": "Delete the group and remove all members?",
-  "gruppeUnbekannt": "Unknown group"
+  "gruppeUnbekannt": "Unknown group",
+  "fehlerAufgetreten": "An error occurred. Please try again.",
+  "mitgliedEntfernen": "Remove member"
 }

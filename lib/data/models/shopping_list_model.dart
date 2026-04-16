@@ -17,7 +17,7 @@ class ShoppingListModel extends HiveObject {
   final DateTime createdAt;
 
   @HiveField(4)
-  String? familyGroupId;
+  final String? familyGroupId;
 
   ShoppingListModel({
     required this.id,

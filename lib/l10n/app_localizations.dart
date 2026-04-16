@@ -657,6 +657,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unknown group'**
   String get gruppeUnbekannt;
+
+  /// No description provided for @fehlerAufgetreten.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred. Please try again.'**
+  String get fehlerAufgetreten;
+
+  /// No description provided for @mitgliedEntfernen.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove member'**
+  String get mitgliedEntfernen;
 }
 
 class _AppLocalizationsDelegate

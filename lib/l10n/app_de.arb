@@ -102,5 +102,7 @@
   "wiederholen": "Wiederholen",
   "gruppeLoeschen": "Gruppe löschen",
   "gruppeLoeschenBestaetigung": "Gruppe löschen und alle Mitglieder entfernen?",
-  "gruppeUnbekannt": "Unbekannte Gruppe"
+  "gruppeUnbekannt": "Unbekannte Gruppe",
+  "fehlerAufgetreten": "Ein Fehler ist aufgetreten. Bitte erneut versuchen.",
+  "mitgliedEntfernen": "Mitglied entfernen"
 }

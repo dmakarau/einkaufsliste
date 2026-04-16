@@ -31,9 +31,9 @@ class _FamilieScreenState extends State<FamilieScreen> {
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthError) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.message)));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.l10n.fehlerAufgetreten)),
+          );
         }
       },
       builder: (context, authState) {
@@ -81,9 +81,9 @@ class _GroupBody extends StatelessWidget {
     return BlocConsumer<FamilyCubit, FamilyState>(
       listener: (context, state) {
         if (state is FamilyError) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.message)));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(context.l10n.fehlerAufgetreten)),
+          );
         }
       },
       builder: (context, state) => switch (state) {
@@ -441,7 +441,7 @@ class _MemberTile extends StatelessWidget {
       trailing: state.isOwner && !member.isAdmin
           ? IconButton(
               icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-              tooltip: context.l10n.fertig,
+              tooltip: context.l10n.mitgliedEntfernen,
               onPressed: () =>
                   context.read<FamilyCubit>().removeMember(member.id),
             )

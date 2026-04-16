@@ -293,4 +293,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get gruppeUnbekannt => 'Неизвестная группа';
+
+  @override
+  String get fehlerAufgetreten => 'Произошла ошибка. Попробуйте ещё раз.';
+
+  @override
+  String get mitgliedEntfernen => 'Удалить участника';
 }

@@ -149,11 +149,18 @@ alter table categories
 
 ```sql
 -- family_groups
+-- Note: the third clause lets invited users see the group name before they accept.
+-- Without it, pending invitees see '—' as the group name until acceptance.
 create policy "select_my_group" on family_groups for select using (
   owner_id = auth.uid()
   or id in (
     select group_id from family_group_members
     where user_id = auth.uid() and status = 'accepted'
+  )
+  or id in (
+    select group_id from family_group_members
+    where email = (select email from auth.users where id = auth.uid())
+      and status = 'pending'
   )
 );
 create policy "insert_group" on family_groups for insert
@@ -316,9 +323,10 @@ See `.claude/rules/` for architecture and Flutter coding conventions used in thi
 ## Key Commands
 
 ```bash
-flutter run --dart-define-from-file=.dart_defines   # run with Supabase
-flutter test                                         # run tests
-flutter analyze                                      # lint
-dart format lib/                                     # format
-dart run build_runner build --delete-conflicting-outputs  # regen Hive adapters
+flutter run --dart-define-from-file=.dart_defines        # run with Supabase
+flutter test                                              # run tests
+flutter analyze                                           # lint
+dart format lib/                                          # format
+flutter gen-l10n                                          # regen translations (after editing .arb files)
+dart run build_runner build --delete-conflicting-outputs  # regen Hive adapters (after model changes)
 ```

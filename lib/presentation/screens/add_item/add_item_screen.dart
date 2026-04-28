@@ -11,6 +11,7 @@ import '../../../core/extensions/app_localizations_extensions.dart';
 import '../../../core/extensions/build_context_extensions.dart';
 import '../../../data/models/category_model.dart';
 import '../../../data/repositories/category_repository.dart';
+import '../../../data/services/product_search_service.dart';
 import '../../blocs/shopping_item/shopping_item_cubit.dart';
 
 class AddItemScreen extends StatefulWidget {
@@ -36,6 +37,10 @@ class _AddItemScreenState extends State<AddItemScreen> {
   StreamSubscription<void>? _catSubscription;
   final _categoryRepo = CategoryRepository();
 
+  final _searchService = ProductSearchService();
+  Timer? _debounce;
+  List<ProductSuggestion> _suggestions = [];
+
   @override
   void initState() {
     super.initState();
@@ -57,11 +62,46 @@ class _AddItemScreenState extends State<AddItemScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _catSubscription?.cancel();
     _nameController.dispose();
     _quantityController.dispose();
     super.dispose();
   }
+
+  void _onNameChanged(String value) {
+    _debounce?.cancel();
+    final query = value.trim();
+    if (query.length < 2) {
+      setState(() => _suggestions = []);
+      return;
+    }
+    // Show local results instantly, then upgrade with API results.
+    setState(() => _suggestions = _searchService.searchLocal(query));
+    _debounce = Timer(const Duration(milliseconds: 400), () async {
+      final remote = await _searchService.searchRemote(query);
+      if (mounted && remote != null) setState(() => _suggestions = remote);
+    });
+  }
+
+  void _selectSuggestion(ProductSuggestion suggestion) {
+    final name = suggestion.displayName;
+    _nameController.text = name;
+    _nameController.selection = TextSelection.collapsed(offset: name.length);
+    _debounce?.cancel();
+    setState(() => _suggestions = []);
+  }
+
+  Widget _placeholderIcon() => Container(
+    width: 44,
+    height: 44,
+    color: AppColors.catAndere.withValues(alpha: 0.12),
+    child: const Icon(
+      Icons.shopping_basket_outlined,
+      size: 22,
+      color: AppColors.textSecondary,
+    ),
+  );
 
   Future<void> _pickImage(ImageSource source) async {
     setState(() => _isPickingImage = true);
@@ -224,6 +264,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
   Future<void> _save() async {
     final name = _nameController.text.trim();
     if (name.isEmpty || _selectedCategoryId == null) return;
+    _debounce?.cancel();
+    setState(() => _suggestions = []);
     final qty = double.tryParse(_quantityController.text) ?? 1;
     await context.read<ShoppingItemCubit>().addItem(
       listId: widget.listId,
@@ -284,7 +326,10 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       contentPadding: EdgeInsets.zero,
                     ),
                     onSubmitted: (_) => _save(),
-                    onChanged: (_) => setState(() {}),
+                    onChanged: (value) {
+                      setState(() {});
+                      _onNameChanged(value);
+                    },
                   ),
                 ),
                 const Padding(
@@ -316,6 +361,80 @@ class _AddItemScreenState extends State<AddItemScreen> {
               ],
             ),
           ),
+          // Autocomplete suggestions
+          if (_suggestions.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Material(
+                elevation: 2,
+                borderRadius: BorderRadius.circular(8),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 260),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    itemCount: _suggestions.length,
+                    separatorBuilder: (_, _) =>
+                        const Divider(height: 1, indent: 68),
+                    itemBuilder: (_, i) {
+                      final s = _suggestions[i];
+                      return InkWell(
+                        onTap: () => _selectSuggestion(s),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          child: Row(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: s.imageUrl != null
+                                    ? Image.network(
+                                        s.imageUrl!,
+                                        width: 44,
+                                        height: 44,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, _, _) =>
+                                            _placeholderIcon(),
+                                      )
+                                    : _placeholderIcon(),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (s.brand != null)
+                                      Text(
+                                        s.brand!,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                              color: AppColors.textSecondary,
+                                            ),
+                                      ),
+                                    Text(
+                                      s.name,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
           // Category — always visible
           const SizedBox(height: 16),
           Padding(

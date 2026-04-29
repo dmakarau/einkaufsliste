@@ -62,6 +62,7 @@ lib/
 | Image picker | `image_picker` |
 | Network image cache | `cached_network_image` |
 | File paths | `path_provider` + `path` |
+| HTTP client | `http` |
 | Test mocking | `mocktail` (dev) |
 
 ## Data Models
@@ -96,12 +97,14 @@ Modal screens (e.g. AddItemScreen) use `showModalBottomSheet`, not a route.
 
 **AddItemScreen** reads categories directly via `CategoryRepository()` (not `context.read`) and subscribes to `CategoryRepository.watch()` so the picker updates reactively if seeding completes after the sheet opens. This is intentional — the modal builder's context is outside the app's `RepositoryProvider` tree.
 
+**Product autocomplete in AddItemScreen:** `ProductSearchService` (`lib/data/services/product_search_service.dart`) provides two-phase autocomplete. `searchLocal()` filters `kCommonProducts` (`lib/core/constants/common_products.dart`) synchronously for instant results. `searchRemote()` queries the Open Food Facts Search-a-licious API (`https://search.openfoodfacts.org/search`) and returns `ProductSuggestion` objects with `name`, `brand`, and `imageUrl`. The screen shows local results immediately on each keystroke and upgrades to API results after a 400 ms debounce. `ProductSearchService` accepts an optional `http.Client` for testing and is instantiated directly in the widget (same pattern as `CategoryRepository()`). `AddItemScreen` accepts an optional `searchService` parameter for widget testing.
+
 **Auth sign-out behaviour:** `AuthCubit._onAuthStateChanged(null)` clears lists and items but intentionally does **not** clear categories. On iOS, the Supabase client fires a null auth event before restoring the session, which would empty the category box before re-seeding could complete. Categories are always overwritten by `pullAll()` on the next sign-in, so leaving them in place is safe.
 
 ## Testing
 
-Tests live in `test/blocs/` (Cubit unit tests) and `test/helpers/` (shared fakes).
-Covered: `ShoppingListCubit`, `ShoppingItemCubit`, `AuthCubit`, `SettingsCubit`.
+Tests live in `test/blocs/` (Cubit unit tests), `test/services/` (service unit tests), `test/widgets/` (widget tests), and `test/helpers/` (shared fakes).
+Covered: `ShoppingListCubit`, `ShoppingItemCubit`, `AuthCubit`, `SettingsCubit`, `ProductSearchService`, `AddItemScreen` (autocomplete behaviour).
 Not covered: `AuthRepository`, `SupabaseSyncService`, `FamilyGroupRepository`, `FamilyCubit` (wrap Supabase directly, no injection point).
 
 See `.claude/rules/testing.md` for test infrastructure, the `MockAuthRepository` gotcha, async assertion patterns, and Hive test setup.

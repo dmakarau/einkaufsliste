@@ -14,7 +14,7 @@
 ### `lib/data/`
 - **Models**: annotated with `@HiveType` / `@HiveField` for persisted data. Transient models (e.g. `AppUser`) are plain Dart classes without Hive annotations.
 - **Repositories**: async CRUD methods over Hive boxes. Local source of truth. No Supabase calls.
-- **Services**: `SyncService` is the abstract interface; `SupabaseSyncService` is the implementation. Called from Cubits fire-and-forget. `supabase_flutter` is imported only inside `SupabaseSyncService` and `AuthRepository` — never in the presentation layer.
+- **Services**: `SyncService` is the abstract interface; `SupabaseSyncService` is the implementation. Called from Cubits fire-and-forget. `supabase_flutter` is imported only inside `SupabaseSyncService` and `AuthRepository` — never in the presentation layer. `ProductSearchService` is a standalone service (no interface) that wraps the Open Food Facts Search-a-licious API; it accepts an optional `http.Client` for testing and is instantiated directly in widgets (no Cubit needed — results are ephemeral UI state).
 - No Flutter UI imports in this layer
 
 ### `lib/presentation/`

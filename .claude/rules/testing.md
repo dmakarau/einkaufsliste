@@ -8,6 +8,8 @@
 | `ShoppingItemCubit` | `test/blocs/shopping_item_cubit_test.dart` | Full method coverage |
 | `AuthCubit` | `test/blocs/auth_cubit_test.dart` | Uses `_FakeAuthRepository` — see below |
 | `SettingsCubit` | `test/blocs/settings_cubit_test.dart` | Uses real Hive in temp dir — see below |
+| `ProductSearchService` | `test/services/product_search_service_test.dart` | Uses mocktail `http.Client` injected via constructor |
+| `AddItemScreen` autocomplete | `test/widgets/add_item_screen_autocomplete_test.dart` | Widget test; uses `_StubSearchService` injected via `searchService` param; Hive in temp dir |
 
 **Not unit tested:** `AuthRepository`, `SupabaseSyncService`, `FamilyGroupRepository`, and `FamilyCubit` wrap Supabase directly with no injection point. Testing them requires a live Supabase instance.
 

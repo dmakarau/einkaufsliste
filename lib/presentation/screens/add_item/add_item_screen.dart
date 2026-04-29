@@ -40,6 +40,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
   final _searchService = ProductSearchService();
   Timer? _debounce;
   List<ProductSuggestion> _suggestions = [];
+  String? _suggestionImageUrl;
 
   @override
   void initState() {
@@ -77,10 +78,16 @@ class _AddItemScreenState extends State<AddItemScreen> {
       return;
     }
     // Show local results instantly, then upgrade with API results.
-    setState(() => _suggestions = _searchService.searchLocal(query));
+    setState(() {
+      _suggestions = _searchService.searchLocal(query);
+      _suggestionImageUrl = null;
+    });
     _debounce = Timer(const Duration(milliseconds: 400), () async {
       final remote = await _searchService.searchRemote(query);
-      if (mounted && remote != null) setState(() => _suggestions = remote);
+      // Discard stale responses if the user has already typed something different.
+      if (mounted && remote != null && _nameController.text.trim() == query) {
+        setState(() => _suggestions = remote);
+      }
     });
   }
 
@@ -89,7 +96,10 @@ class _AddItemScreenState extends State<AddItemScreen> {
     _nameController.text = name;
     _nameController.selection = TextSelection.collapsed(offset: name.length);
     _debounce?.cancel();
-    setState(() => _suggestions = []);
+    setState(() {
+      _suggestions = [];
+      _suggestionImageUrl = suggestion.imageUrl;
+    });
   }
 
   Widget _placeholderIcon() => Container(
@@ -273,7 +283,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
       quantity: qty,
       unit: _selectedUnit,
       categoryId: _selectedCategoryId!,
-      imagePath: _pickedImageFile?.path,
+      imagePath: _pickedImageFile?.path ?? _suggestionImageUrl,
     );
     if (mounted) Navigator.of(context).pop();
   }

@@ -1,3 +1,4 @@
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/auth_user.dart';
@@ -42,7 +43,42 @@ class AuthRepository {
     }
   }
 
+  Future<void> signInWithGoogle() async {
+    try {
+      GoogleSignInAccount? googleUser = await GoogleSignIn.instance
+          .attemptLightweightAuthentication();
+      googleUser ??= await GoogleSignIn.instance.authenticate();
+
+      final idToken = googleUser.authentication.idToken;
+      if (idToken == null) {
+        throw const AuthRepositoryException('No ID token received from Google');
+      }
+
+      final authorization =
+          await googleUser.authorizationClient.authorizationForScopes([
+            'email',
+            'profile',
+          ]) ??
+          await googleUser.authorizationClient.authorizeScopes([
+            'email',
+            'profile',
+          ]);
+
+      await _client.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: authorization.accessToken,
+      );
+    } on AuthException catch (e) {
+      throw AuthRepositoryException(e.message);
+    } catch (e) {
+      if (e is AuthRepositoryException) rethrow;
+      throw AuthRepositoryException(e.toString());
+    }
+  }
+
   Future<void> signOut() async {
     await _client.auth.signOut();
+    await GoogleSignIn.instance.signOut();
   }
 }

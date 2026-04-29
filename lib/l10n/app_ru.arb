@@ -104,5 +104,6 @@
   "gruppeLoeschenBestaetigung": "Удалить группу и убрать всех участников?",
   "gruppeUnbekannt": "Неизвестная группа",
   "fehlerAufgetreten": "Произошла ошибка. Попробуйте ещё раз.",
-  "mitgliedEntfernen": "Удалить участника"
+  "mitgliedEntfernen": "Удалить участника",
+  "signInWithGoogle": "Войти через Google"
 }

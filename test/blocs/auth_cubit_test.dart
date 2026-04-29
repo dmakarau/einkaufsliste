@@ -40,6 +40,9 @@ class _FakeAuthRepository implements AuthRepository {
     if (_signOutError != null) throw _signOutError!;
   }
 
+  @override
+  Future<void> signInWithGoogle() async {}
+
   void emitUser(AppUser? user) => _controller.add(user);
   void setCurrentUser(AppUser? user) => _currentUser = user;
   void failSignInWith(String message) =>

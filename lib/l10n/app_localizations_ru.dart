@@ -299,4 +299,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get mitgliedEntfernen => 'Удалить участника';
+
+  @override
+  String get signInWithGoogle => 'Войти через Google';
 }

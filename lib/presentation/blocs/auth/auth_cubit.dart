@@ -92,6 +92,16 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  Future<void> signInWithGoogle() async {
+    emit(const AuthLoading());
+    try {
+      await _authRepo.signInWithGoogle();
+      // _onAuthStateChanged handles state update + sync via stream
+    } catch (e) {
+      emit(AuthError(_extractMessage(e)));
+    }
+  }
+
   Future<void> signOut() async {
     emit(const AuthLoading());
     try {

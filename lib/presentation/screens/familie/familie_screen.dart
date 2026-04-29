@@ -572,6 +572,23 @@ class _LoginForm extends StatelessWidget {
               style: const TextStyle(color: AppColors.primary),
             ),
           ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => context.read<AuthCubit>().signInWithGoogle(),
+              icon: const Icon(Icons.g_mobiledata, size: 24),
+              label: Text(context.l10n.signInWithGoogle),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.primary),
+                foregroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

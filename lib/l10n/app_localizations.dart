@@ -669,6 +669,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove member'**
   String get mitgliedEntfernen;
+
+  /// No description provided for @signInWithGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google'**
+  String get signInWithGoogle;
 }
 
 class _AppLocalizationsDelegate

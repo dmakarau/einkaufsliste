@@ -1,0 +1,34 @@
+{
+  "project_info": {
+    "project_id": "einkaufsliste-494818",
+    "project_number": "879017178255",
+    "storage_bucket": ""
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:879017178255:android:000000000000000000000000",
+        "android_client_info": {
+          "package_name": "com.example.shopping_list"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "879017178255-n8p1p6c8go82p4ceb3v52g0s4hos7cou.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.shopping_list",
+            "certificate_hash": ""
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": ""
+        }
+      ],
+      "services": {}
+    }
+  ],
+  "configuration_version": "1"
+}

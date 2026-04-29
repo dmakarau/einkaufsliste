@@ -15,6 +15,8 @@ class ProductSuggestion {
 }
 
 class ProductSearchService {
+  static const _germanyTag = 'en:germany';
+
   List<ProductSuggestion> searchLocal(String query) {
     final q = query.toLowerCase();
     return kCommonProducts
@@ -24,13 +26,15 @@ class ProductSearchService {
         .toList();
   }
 
+  // Uses Search-a-licious — Elasticsearch-backed, more stable than the main API.
+  // Fetches 100 results and filters client-side to products tagged as sold in
+  // Germany (en:germany), since Search-a-licious ignores server-side country filters.
   Future<List<ProductSuggestion>?> searchRemote(String query) async {
     try {
-      final uri = Uri.https('world.openfoodfacts.org', '/api/v2/search', {
+      final uri = Uri.https('search.openfoodfacts.org', '/search', {
         'q': query,
-        'page_size': '8',
-        'fields': 'product_name,brands,image_front_url',
-        'lc': 'de',
+        'page_size': '100',
+        'fields': 'product_name,brands,image_front_url,countries_tags',
       });
       final response = await http
           .get(
@@ -39,29 +43,32 @@ class ProductSearchService {
               'User-Agent': 'EinkaufslisteApp/1.0 (denis.makarow@gmail.com)',
             },
           )
-          .timeout(const Duration(seconds: 6));
+          .timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final products = data['products'] as List<dynamic>? ?? [];
+        final hits = data['hits'] as List<dynamic>? ?? [];
         final seen = <String>{};
         final results = <ProductSuggestion>[];
-        for (final p in products) {
+        for (final p in hits) {
+          final tags = (p['countries_tags'] as List<dynamic>? ?? [])
+              .cast<String>();
+          if (!tags.contains(_germanyTag)) continue;
           final name = (p['product_name'] as String? ?? '').trim();
           if (name.isEmpty) continue;
-          final rawBrands = (p['brands'] as String? ?? '').trim();
-          final brand = rawBrands.isNotEmpty
-              ? rawBrands.split(',').first.trim()
+          final brandsList = p['brands'] as List<dynamic>? ?? [];
+          final brand = brandsList.isNotEmpty
+              ? brandsList.first.toString().trim()
               : null;
           final imageUrl = p['image_front_url'] as String?;
           final key = '$brand|$name';
-          if (seen.add(key)) {
+          if (seen.add(key) && results.length < 8) {
             results.add(
               ProductSuggestion(name: name, brand: brand, imageUrl: imageUrl),
             );
           }
         }
-        if (results.isNotEmpty) return results;
+        if (results.length >= 4) return results;
       } else {
         debugPrint('[ProductSearch] HTTP ${response.statusCode}');
       }

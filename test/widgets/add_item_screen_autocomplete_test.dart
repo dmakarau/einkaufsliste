@@ -16,6 +16,14 @@ import 'package:shopping_list/presentation/screens/add_item/add_item_screen.dart
 
 import '../helpers/fake_sync_service.dart';
 
+CategoryModel _makeCategory() => CategoryModel(
+  id: 'cat-1',
+  name: 'Sonstiges',
+  colorValue: 0xFF9E9E9E,
+  sortOrder: 0,
+  isDefault: true,
+);
+
 class _StubSearchService extends ProductSearchService {
   final List<ProductSuggestion> _localResults;
   _StubSearchService(this._localResults);
@@ -56,10 +64,13 @@ void main() {
     if (!Hive.isAdapterRegistered(1)) {
       Hive.registerAdapter(ShoppingItemModelAdapter());
     }
-    await Hive.openBox<CategoryModel>(HiveBoxes.categories);
+    final catBox = await Hive.openBox<CategoryModel>(HiveBoxes.categories);
+    final cat = _makeCategory();
+    await catBox.put(cat.id, cat);
 
     itemRepo = MockShoppingItemRepository();
     when(() => itemRepo.getByListId(any())).thenReturn([]);
+    when(() => itemRepo.add(any())).thenAnswer((_) async {});
     itemCubit = ShoppingItemCubit(
       itemRepository: itemRepo,
       syncService: FakeSyncService(),
@@ -135,4 +146,43 @@ void main() {
     expect(nameField.controller?.text, equals('Kerrygold Butter'));
     expect(find.text('Butter'), findsNothing);
   });
+
+  testWidgets(
+    'image from suggestion is not saved when user edits back to < 2 chars',
+    (tester) async {
+      final suggestions = [
+        const ProductSuggestion(
+          name: 'Milch',
+          brand: 'Weihenstephan',
+          imageUrl: 'https://example.com/milch.jpg',
+        ),
+      ];
+      await tester.pumpWidget(buildScreen(_StubSearchService(suggestions)));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Select a suggestion — this captures imageUrl into _suggestionImageUrl.
+      await tester.enterText(find.byType(TextField).first, 'Mi');
+      await tester.pump();
+      await tester.tap(find.text('Milch'));
+      await tester.pump();
+
+      // Edit back to a single character — should clear the captured image URL.
+      await tester.enterText(find.byType(TextField).first, 'W');
+      await tester.pump();
+
+      // Type a new product name manually (no suggestion selected).
+      await tester.enterText(find.byType(TextField).first, 'Wurst');
+      await tester.pump();
+
+      // Save — tap the TextButton whose label is the localized "Save now" string.
+      await tester.tap(find.text('Save now'));
+      await tester.pump();
+
+      final captured =
+          verify(() => itemRepo.add(captureAny())).captured.single
+              as ShoppingItemModel;
+      expect(captured.name, equals('Wurst'));
+      expect(captured.imagePath, isNull);
+    },
+  );
 }

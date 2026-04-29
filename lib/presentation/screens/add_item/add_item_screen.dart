@@ -80,7 +80,10 @@ class _AddItemScreenState extends State<AddItemScreen> {
     _debounce?.cancel();
     final query = value.trim();
     if (query.length < 2) {
-      setState(() => _suggestions = []);
+      setState(() {
+        _suggestions = [];
+        _suggestionImageUrl = null;
+      });
       return;
     }
     // Show local results instantly, then upgrade with API results.

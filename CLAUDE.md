@@ -25,9 +25,16 @@ flutter gen-l10n
 ```
 
 ## Secrets
-Supabase credentials are passed at build time via `--dart-define-from-file=.dart_defines`.
+All credentials are passed at build time via `--dart-define-from-file=.dart_defines`.
 `.dart_defines` is gitignored — copy from `.dart_defines.example` and fill in real values.
 `lib/core/constants/supabase_config.dart` reads them via `String.fromEnvironment`.
+
+| Key | Description |
+|-----|-------------|
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_ANON_KEY` | Supabase anon key |
+| `GOOGLE_WEB_CLIENT_ID` | Web OAuth client ID (from Google Cloud Console) |
+| `GOOGLE_IOS_CLIENT_ID` | iOS OAuth client ID (from Google Cloud Console) |
 
 ## Architecture
 Feature-first clean architecture. See `.claude/rules/architecture.md` for layer rules and `.claude/rules/flutter.md` for Flutter/Cubit conventions.
@@ -63,6 +70,7 @@ lib/
 | Network image cache | `cached_network_image` |
 | File paths | `path_provider` + `path` |
 | HTTP client | `http` |
+| Google Sign-In | `google_sign_in` |
 | Test mocking | `mocktail` (dev) |
 
 ## Data Models
@@ -100,6 +108,8 @@ Modal screens (e.g. AddItemScreen) use `showModalBottomSheet`, not a route.
 **Product autocomplete in AddItemScreen:** `ProductSearchService` (`lib/data/services/product_search_service.dart`) provides two-phase autocomplete. `searchLocal()` filters `kCommonProducts` (`lib/core/constants/common_products.dart`) synchronously for instant results. `searchRemote()` queries the Open Food Facts Search-a-licious API (`https://search.openfoodfacts.org/search`) and returns `ProductSuggestion` objects with `name`, `brand`, and `imageUrl`. The screen shows local results immediately on each keystroke and upgrades to API results after a 400 ms debounce. `ProductSearchService` accepts an optional `http.Client` for testing and is instantiated directly in the widget (same pattern as `CategoryRepository()`). `AddItemScreen` accepts an optional `searchService` parameter for widget testing.
 
 **Auth sign-out behaviour:** `AuthCubit._onAuthStateChanged(null)` clears lists and items but intentionally does **not** clear categories. On iOS, the Supabase client fires a null auth event before restoring the session, which would empty the category box before re-seeding could complete. Categories are always overwritten by `pullAll()` on the next sign-in, so leaving them in place is safe.
+
+**Google Sign-In:** Uses `google_sign_in` v7 native flow (no browser redirect). `GoogleSignIn.instance.initialize()` is called in `main()` with `serverClientId` (Web client ID) and `clientId` (iOS client ID). `AuthRepository.signInWithGoogle()` calls `authenticate()`, extracts the ID token, then calls `supabase.auth.signInWithIdToken()`. The existing `_onAuthStateChanged` stream handles everything after that. `signOut()` also calls `GoogleSignIn.instance.signOut()` to revoke the Google session. Platform files: `ios/Runner/GoogleService-Info.plist` (iOS) and `android/app/google-services.json` (Android) — both committed; they contain only public OAuth client IDs, not secrets. Supabase dashboard requires **Skip nonce checks** enabled on the Google provider (iOS SDK omits the nonce).
 
 ## Testing
 

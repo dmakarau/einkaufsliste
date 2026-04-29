@@ -10,7 +10,7 @@ A German shopping list app for iOS and Android built with Flutter. Supports mult
 - Items with name, quantity, unit, category, and optional photo; product name autocomplete powered by Open Food Facts (with offline fallback)
 - 13 default categories with colour coding
 - Check/uncheck items; delete or edit at any time
-- Sign up / sign in / sign out — data synced to your Supabase account
+- Sign up / sign in (email+password or Google) / sign out — data synced to your Supabase account
 - Offline-first: works without internet, syncs on sign-in and automatically when the app returns to the foreground
 - Family group sharing — create a group, invite members by email, share individual lists; changes sync in real-time between members
 - German / English / Russian UI (follows device locale, manual override in Settings)
@@ -50,11 +50,15 @@ Edit `.dart_defines` (never commit this file — it is gitignored):
 ```json
 {
   "SUPABASE_URL": "https://YOUR_PROJECT_ID.supabase.co",
-  "SUPABASE_ANON_KEY": "YOUR_ANON_KEY_HERE"
+  "SUPABASE_ANON_KEY": "YOUR_ANON_KEY_HERE",
+  "GOOGLE_WEB_CLIENT_ID": "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com",
+  "GOOGLE_IOS_CLIENT_ID": "YOUR_IOS_CLIENT_ID.apps.googleusercontent.com"
 }
 ```
 
-Find these values in your Supabase dashboard → Project Settings → API.
+- Supabase values: dashboard → Project Settings → API
+- `GOOGLE_WEB_CLIENT_ID`: Web OAuth client ID from Google Cloud Console; passed as `serverClientId` to the Google Sign-In SDK
+- `GOOGLE_IOS_CLIENT_ID`: iOS OAuth client ID; also present in `ios/Runner/GoogleService-Info.plist` (the native SDK reads the plist directly — this entry is kept here for visibility alongside the other Google credentials)
 
 ### 3. Set up the Supabase database
 
@@ -275,7 +279,26 @@ with check (bucket_id = 'shopping-item-images' and (storage.foldername(name))[1]
 
 Images are uploaded automatically when an item with a local photo is synced.
 
-### 5. Configure GitHub Actions secrets
+### 5. Set up Google Sign-In
+
+1. **Google Cloud Console** — create 3 OAuth 2.0 client IDs (Web, iOS, Android) under the same project. Configure the OAuth consent screen first.
+   - Web client: add `https://<your-project-ref>.supabase.co/auth/v1/callback` as an Authorized Redirect URI
+   - iOS client: use your app's Bundle ID
+   - Android client: use package name + debug SHA-1 (`keytool -list -v -alias androiddebugkey -keystore ~/.android/debug.keystore`)
+
+2. **Supabase dashboard** → Authentication → Providers → Google:
+   - Enable, paste Web Client ID + Secret
+   - Add iOS and Android client IDs to the **Client IDs** field (comma-separated)
+   - Enable **Skip nonce checks** (required for iOS)
+
+3. **Platform files** — replace the placeholders already in the repo:
+   - Download `GoogleService-Info.plist` (iOS) → place at `ios/Runner/GoogleService-Info.plist`
+   - Create/download `google-services.json` (Android) → place at `android/app/google-services.json`
+   - Update the `CFBundleURLSchemes` entry in `ios/Runner/Info.plist` with your reversed iOS client ID (`REVERSED_CLIENT_ID` from `GoogleService-Info.plist`)
+
+4. Fill in `GOOGLE_WEB_CLIENT_ID` and `GOOGLE_IOS_CLIENT_ID` in `.dart_defines`
+
+### 6. Configure GitHub Actions secrets (optional)
 
 For CI builds to use real Supabase credentials, add these secrets to your GitHub repository (Settings → Secrets and variables → Actions):
 
@@ -286,7 +309,7 @@ For CI builds to use real Supabase credentials, add these secrets to your GitHub
 
 CI runs without these secrets will use placeholder values (build compiles, but app cannot connect to Supabase at runtime).
 
-### 6. Run the app
+### 7. Run the app
 
 ```bash
 flutter run --dart-define-from-file=.dart_defines

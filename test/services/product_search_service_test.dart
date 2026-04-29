@@ -17,8 +17,9 @@ void main() {
     registerFallbackValue(Uri());
   });
 
-  Map<String, dynamic> makeResponse(List<Map<String, dynamic>> hits) =>
-      {'hits': hits};
+  Map<String, dynamic> makeResponse(List<Map<String, dynamic>> hits) => {
+    'hits': hits,
+  };
 
   http.Response ok(Map<String, dynamic> body) =>
       http.Response(jsonEncode(body), 200);
@@ -28,13 +29,12 @@ void main() {
     String? brands,
     String? imageUrl,
     List<String> countryTags = const ['en:germany'],
-  }) =>
-      {
-        'product_name': name,
-        'brands': brands,
-        'image_front_url': imageUrl,
-        'countries_tags': countryTags,
-      };
+  }) => {
+    'product_name': name,
+    'brands': brands,
+    'image_front_url': imageUrl,
+    'countries_tags': countryTags,
+  };
 
   group('searchLocal', () {
     test('returns matching products case-insensitively', () {
@@ -50,8 +50,9 @@ void main() {
 
   group('searchRemote', () {
     test('parses comma-separated brands string correctly', () async {
-      when(() => mockClient.get(any(), headers: any(named: 'headers')))
-          .thenAnswer(
+      when(
+        () => mockClient.get(any(), headers: any(named: 'headers')),
+      ).thenAnswer(
         (_) async => ok(
           makeResponse([
             hit(name: 'Vollmilch', brands: 'Weihenstephan, Bauer'),
@@ -69,8 +70,9 @@ void main() {
     });
 
     test('returns null when fewer than 4 Germany-tagged results', () async {
-      when(() => mockClient.get(any(), headers: any(named: 'headers')))
-          .thenAnswer(
+      when(
+        () => mockClient.get(any(), headers: any(named: 'headers')),
+      ).thenAnswer(
         (_) async => ok(
           makeResponse([
             hit(name: 'Butter', brands: 'Kerrygold'),
@@ -84,8 +86,9 @@ void main() {
     });
 
     test('filters out products not tagged en:germany', () async {
-      when(() => mockClient.get(any(), headers: any(named: 'headers')))
-          .thenAnswer(
+      when(
+        () => mockClient.get(any(), headers: any(named: 'headers')),
+      ).thenAnswer(
         (_) async => ok(
           makeResponse([
             hit(
@@ -107,8 +110,9 @@ void main() {
     });
 
     test('skips products with empty name', () async {
-      when(() => mockClient.get(any(), headers: any(named: 'headers')))
-          .thenAnswer(
+      when(
+        () => mockClient.get(any(), headers: any(named: 'headers')),
+      ).thenAnswer(
         (_) async => ok(
           makeResponse([
             hit(name: '', brands: 'SomeBrand'),
@@ -126,24 +130,27 @@ void main() {
     });
 
     test('returns null on HTTP error', () async {
-      when(() => mockClient.get(any(), headers: any(named: 'headers')))
-          .thenAnswer((_) async => http.Response('', 500));
+      when(
+        () => mockClient.get(any(), headers: any(named: 'headers')),
+      ).thenAnswer((_) async => http.Response('', 500));
 
       final results = await service.searchRemote('Milch');
       expect(results, isNull);
     });
 
     test('returns null on network exception', () async {
-      when(() => mockClient.get(any(), headers: any(named: 'headers')))
-          .thenThrow(Exception('network error'));
+      when(
+        () => mockClient.get(any(), headers: any(named: 'headers')),
+      ).thenThrow(Exception('network error'));
 
       final results = await service.searchRemote('Milch');
       expect(results, isNull);
     });
 
     test('brand is null when brands field is empty', () async {
-      when(() => mockClient.get(any(), headers: any(named: 'headers')))
-          .thenAnswer(
+      when(
+        () => mockClient.get(any(), headers: any(named: 'headers')),
+      ).thenAnswer(
         (_) async => ok(
           makeResponse([
             hit(name: 'Eigenmarke Milch', brands: ''),

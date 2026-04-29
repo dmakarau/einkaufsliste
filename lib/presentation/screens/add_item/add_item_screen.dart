@@ -9,16 +9,21 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/extensions/app_localizations_extensions.dart';
 import '../../../core/extensions/build_context_extensions.dart';
-import '../../../data/models/category_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../data/models/category_model.dart';
 import '../../../data/repositories/category_repository.dart';
 import '../../../data/services/product_search_service.dart';
 import '../../blocs/shopping_item/shopping_item_cubit.dart';
 
 class AddItemScreen extends StatefulWidget {
-  const AddItemScreen({super.key, required this.listId});
+  const AddItemScreen({
+    super.key,
+    required this.listId,
+    ProductSearchService? searchService,
+  }) : _searchService = searchService;
 
   final String listId;
+  final ProductSearchService? _searchService;
 
   @override
   State<AddItemScreen> createState() => _AddItemScreenState();
@@ -38,7 +43,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
   StreamSubscription<void>? _catSubscription;
   final _categoryRepo = CategoryRepository();
 
-  final _searchService = ProductSearchService();
+  late final _searchService = widget._searchService ?? ProductSearchService();
   Timer? _debounce;
   List<ProductSuggestion> _suggestions = [];
   String? _suggestionImageUrl;
@@ -337,7 +342,10 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       contentPadding: EdgeInsets.zero,
                     ),
                     onSubmitted: (_) => _save(),
-                    onChanged: _onNameChanged,
+                    onChanged: (value) {
+                      setState(() {});
+                      _onNameChanged(value);
+                    },
                   ),
                 ),
                 const Padding(

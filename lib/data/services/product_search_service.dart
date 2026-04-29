@@ -60,11 +60,13 @@ class ProductSearchService {
           if (!tags.contains(_germanyTag)) continue;
           final name = (p['product_name'] as String? ?? '').trim();
           if (name.isEmpty) continue;
-          final brandsRaw = p['brands'] as String? ?? '';
-          final brand = brandsRaw.isNotEmpty
-              ? brandsRaw.split(',').first.trim()
+          final brandsField = p['brands'];
+          final brand = brandsField is String && brandsField.isNotEmpty
+              ? brandsField.split(',').first.trim()
               : null;
-          final imageUrl = p['image_front_url'] as String?;
+          final imageUrl = p['image_front_url'] is String
+              ? p['image_front_url'] as String
+              : null;
           final key = '$brand|$name';
           if (seen.add(key) && results.length < 8) {
             results.add(

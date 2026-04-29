@@ -167,21 +167,19 @@ void main() {
       await tester.pump();
 
       // Edit back to a single character — should clear the captured image URL.
+      // Crucially, we save immediately without typing more chars (which would
+      // go through the >= 2 branch and incidentally clear _suggestionImageUrl).
       await tester.enterText(find.byType(TextField).first, 'W');
       await tester.pump();
 
-      // Type a new product name manually (no suggestion selected).
-      await tester.enterText(find.byType(TextField).first, 'Wurst');
-      await tester.pump();
-
-      // Save — tap the TextButton whose label is the localized "Save now" string.
+      // Save directly with the 1-char name.
       await tester.tap(find.text('Save now'));
       await tester.pump();
 
       final captured =
           verify(() => itemRepo.add(captureAny())).captured.single
               as ShoppingItemModel;
-      expect(captured.name, equals('Wurst'));
+      expect(captured.name, equals('W'));
       expect(captured.imagePath, isNull);
     },
   );

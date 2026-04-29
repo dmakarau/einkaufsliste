@@ -10,6 +10,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/extensions/app_localizations_extensions.dart';
 import '../../../core/extensions/build_context_extensions.dart';
 import '../../../data/models/category_model.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../data/repositories/category_repository.dart';
 import '../../../data/services/product_search_service.dart';
 import '../../blocs/shopping_item/shopping_item_cubit.dart';
@@ -336,10 +337,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                       contentPadding: EdgeInsets.zero,
                     ),
                     onSubmitted: (_) => _save(),
-                    onChanged: (value) {
-                      setState(() {});
-                      _onNameChanged(value);
-                    },
+                    onChanged: _onNameChanged,
                   ),
                 ),
                 const Padding(
@@ -400,12 +398,14 @@ class _AddItemScreenState extends State<AddItemScreen> {
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(6),
                                 child: s.imageUrl != null
-                                    ? Image.network(
-                                        s.imageUrl!,
+                                    ? CachedNetworkImage(
+                                        imageUrl: s.imageUrl!,
                                         width: 44,
                                         height: 44,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (_, _, _) =>
+                                        placeholder: (_, _) =>
+                                            _placeholderIcon(),
+                                        errorWidget: (_, _, _) =>
                                             _placeholderIcon(),
                                       )
                                     : _placeholderIcon(),

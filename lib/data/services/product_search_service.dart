@@ -15,6 +15,10 @@ class ProductSuggestion {
 }
 
 class ProductSearchService {
+  ProductSearchService({http.Client? client})
+    : _client = client ?? http.Client();
+
+  final http.Client _client;
   static const _germanyTag = 'en:germany';
 
   List<ProductSuggestion> searchLocal(String query) {
@@ -36,7 +40,7 @@ class ProductSearchService {
         'page_size': '100',
         'fields': 'product_name,brands,image_front_url,countries_tags',
       });
-      final response = await http
+      final response = await _client
           .get(
             uri,
             headers: {
@@ -56,9 +60,9 @@ class ProductSearchService {
           if (!tags.contains(_germanyTag)) continue;
           final name = (p['product_name'] as String? ?? '').trim();
           if (name.isEmpty) continue;
-          final brandsList = p['brands'] as List<dynamic>? ?? [];
-          final brand = brandsList.isNotEmpty
-              ? brandsList.first.toString().trim()
+          final brandsRaw = p['brands'] as String? ?? '';
+          final brand = brandsRaw.isNotEmpty
+              ? brandsRaw.split(',').first.trim()
               : null;
           final imageUrl = p['image_front_url'] as String?;
           final key = '$brand|$name';

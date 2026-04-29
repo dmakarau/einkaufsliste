@@ -8,8 +8,9 @@
 | `ShoppingItemCubit` | `test/blocs/shopping_item_cubit_test.dart` | Full method coverage |
 | `AuthCubit` | `test/blocs/auth_cubit_test.dart` | Uses `_FakeAuthRepository` — see below |
 | `SettingsCubit` | `test/blocs/settings_cubit_test.dart` | Uses real Hive in temp dir — see below |
+| `ProductSearchService` | `test/services/product_search_service_test.dart` | Uses mocktail `http.Client` injected via constructor |
 
-**Not unit tested:** `AuthRepository`, `SupabaseSyncService`, `FamilyGroupRepository`, and `FamilyCubit` wrap Supabase directly with no injection point. Testing them requires a live Supabase instance. `ProductSearchService` wraps the Open Food Facts HTTP API with no injection point — same reasoning applies.
+**Not unit tested:** `AuthRepository`, `SupabaseSyncService`, `FamilyGroupRepository`, and `FamilyCubit` wrap Supabase directly with no injection point. Testing them requires a live Supabase instance.
 
 ---
 

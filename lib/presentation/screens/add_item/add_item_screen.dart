@@ -44,6 +44,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
   final _categoryRepo = CategoryRepository();
 
   late final _searchService = widget._searchService ?? ProductSearchService();
+  late final _ownsSearchService = widget._searchService == null;
   Timer? _debounce;
   List<ProductSuggestion> _suggestions = [];
   String? _suggestionImageUrl;
@@ -70,6 +71,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
   @override
   void dispose() {
     _debounce?.cancel();
+    if (_ownsSearchService) _searchService.close();
     _catSubscription?.cancel();
     _nameController.dispose();
     _quantityController.dispose();

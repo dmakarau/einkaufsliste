@@ -21,6 +21,8 @@ class ProductSearchService {
   final http.Client _client;
   static const _germanyTag = 'en:germany';
 
+  void close() => _client.close();
+
   List<ProductSuggestion> searchLocal(String query) {
     final q = query.toLowerCase();
     return kCommonProducts
@@ -41,12 +43,7 @@ class ProductSearchService {
         'fields': 'product_name,brands,image_front_url,countries_tags',
       });
       final response = await _client
-          .get(
-            uri,
-            headers: {
-              'User-Agent': 'EinkaufslisteApp/1.0 (denis.makarow@gmail.com)',
-            },
-          )
+          .get(uri, headers: {'User-Agent': 'EinkaufslisteApp/1.0'})
           .timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {

@@ -9,6 +9,10 @@ class AuthRepositoryException implements Exception {
   final String message;
 }
 
+class AuthRepositoryCancelledException implements Exception {
+  const AuthRepositoryCancelledException();
+}
+
 class AuthRepository {
   const AuthRepository(this._client);
 
@@ -69,10 +73,16 @@ class AuthRepository {
         idToken: idToken,
         accessToken: authorization.accessToken,
       );
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled ||
+          e.code == GoogleSignInExceptionCode.interrupted ||
+          e.code == GoogleSignInExceptionCode.uiUnavailable) {
+        throw const AuthRepositoryCancelledException();
+      }
+      throw AuthRepositoryException(e.toString());
     } on AuthException catch (e) {
       throw AuthRepositoryException(e.message);
     } catch (e) {
-      if (e is AuthRepositoryException) rethrow;
       throw AuthRepositoryException(e.toString());
     }
   }

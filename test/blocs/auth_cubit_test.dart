@@ -18,6 +18,7 @@ class _FakeAuthRepository implements AuthRepository {
   Exception? _signInError;
   Exception? _signUpError;
   Exception? _signOutError;
+  Exception? _signInWithGoogleError;
 
   @override
   AppUser? get currentUser => _currentUser;
@@ -41,7 +42,9 @@ class _FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> signInWithGoogle() async {}
+  Future<void> signInWithGoogle() async {
+    if (_signInWithGoogleError != null) throw _signInWithGoogleError!;
+  }
 
   void emitUser(AppUser? user) => _controller.add(user);
   void setCurrentUser(AppUser? user) => _currentUser = user;
@@ -50,6 +53,10 @@ class _FakeAuthRepository implements AuthRepository {
   void failSignUpWith(String message) =>
       _signUpError = AuthRepositoryException(message);
   void failSignOutWith(String message) => _signOutError = Exception(message);
+  void failSignInWithGoogleWith(String message) =>
+      _signInWithGoogleError = AuthRepositoryException(message);
+  void cancelSignInWithGoogle() =>
+      _signInWithGoogleError = const AuthRepositoryCancelledException();
   Future<void> dispose() => _controller.close();
 }
 
@@ -197,6 +204,52 @@ void main() {
       );
 
       await cubit.signOut();
+
+      await expectation;
+    });
+  });
+
+  group('signInWithGoogle', () {
+    test('emits AuthLoading then AuthAuthenticated on success', () async {
+      final expectation = expectLater(
+        cubit.stream,
+        emitsInOrder([const AuthLoading(), isA<AuthAuthenticated>()]),
+      );
+
+      await cubit.signInWithGoogle();
+      authRepo.emitUser(const AppUser(id: 'user-1', email: 'test@test.com'));
+
+      await expectation;
+      expect(sync.pullAllCalled, 1);
+    });
+
+    test('emits AuthLoading then AuthError on failure', () async {
+      authRepo.failSignInWithGoogleWith('Google sign-in failed');
+
+      final expectation = expectLater(
+        cubit.stream,
+        emitsInOrder([
+          const AuthLoading(),
+          const AuthError('Google sign-in failed'),
+        ]),
+      );
+
+      await cubit.signInWithGoogle();
+
+      await expectation;
+    });
+
+    test('restores previous state silently on cancellation', () async {
+      authRepo.setCurrentUser(null);
+      cubit.checkAuthStatus(); // brings cubit to AuthUnauthenticated
+      authRepo.cancelSignInWithGoogle();
+
+      final expectation = expectLater(
+        cubit.stream,
+        emitsInOrder([const AuthLoading(), const AuthUnauthenticated()]),
+      );
+
+      await cubit.signInWithGoogle();
 
       await expectation;
     });

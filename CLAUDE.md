@@ -133,6 +133,6 @@ All tables have RLS enabled. See `.claude/rules/supabase.md` for RLS policy deta
 
 **Sharing model:** A list is shared with a group by setting `family_group_id`. RLS lets all accepted members read and write items in shared lists. Owner controls INSERT/UPDATE/DELETE on the list record itself.
 
-**Realtime:** `shopping_lists`, `shopping_items`, and `family_group_members` are in the Supabase realtime publication. `ShoppingListCubit` subscribes to group changes when the user is in a group.
+**Realtime:** `shopping_lists`, `shopping_items`, and `family_group_members` are in the Supabase realtime publication. `ShoppingListCubit` subscribes to `shopping_lists` changes (filtered by `family_group_id`) when the user is in a group. Item changes propagate to group members via a Postgres trigger (`shopping_items_touch_list`) that bumps `shopping_lists.updated_at` on every item INSERT/UPDATE/DELETE — the app does not subscribe to `shopping_items` Realtime events directly (Supabase cannot reliably evaluate the complex group-membership RLS policy at Realtime event time).
 
 **Storage:** bucket `shopping-item-images` (public). Images are uploaded by `SupabaseSyncService.pushItem()` when `imagePath` is a local file path; the local path is replaced with the public URL before the DB upsert.

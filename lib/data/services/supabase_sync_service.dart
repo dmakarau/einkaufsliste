@@ -208,15 +208,6 @@ class SupabaseSyncService implements SyncService {
           ),
           callback: (_) => onChanged(),
         )
-        // shopping_items has no family_group_id column so no column filter is
-        // possible here. Any item change triggers onChanged(); RLS limits what
-        // pullAll() actually fetches.
-        .onPostgresChanges(
-          event: PostgresChangeEvent.all,
-          schema: 'public',
-          table: 'shopping_items',
-          callback: (_) => onChanged(),
-        )
         .subscribe();
   }
 

@@ -135,4 +135,4 @@
 - `pullAll()` does **not** filter lists/items by `owner_id` — RLS handles it. Categories are still filtered by `owner_id` (not shared).
 - `pushList()` always includes `'family_group_id': list.familyGroupId` in the upsert (null for personal lists).
 - `shareList()` / `unshareList()` update only the `family_group_id` column on `shopping_lists` in Supabase; the local Hive model is updated via `copyWith(familyGroupId: ...)`.
-- Realtime subscription key: channel name `'group_$groupId'`, subscribes to `shopping_lists` (filtered by `family_group_id`) and `shopping_items` (all — RLS filters at read time).
+- Realtime subscription key: channel name `'group_$groupId'`, subscribes to `shopping_lists` filtered by `family_group_id` only. Item changes are propagated indirectly via a Postgres trigger (`shopping_items_touch_list`) that bumps `shopping_lists.updated_at` on every item INSERT/UPDATE/DELETE. The app does NOT subscribe to `shopping_items` Realtime events directly — Supabase cannot reliably evaluate the complex group-membership RLS policy at Realtime event time, so cross-user item events are silently dropped.

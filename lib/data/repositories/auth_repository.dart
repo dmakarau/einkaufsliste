@@ -58,20 +58,9 @@ class AuthRepository {
         throw const AuthRepositoryException('No ID token received from Google');
       }
 
-      final authorization =
-          await googleUser.authorizationClient.authorizationForScopes([
-            'email',
-            'profile',
-          ]) ??
-          await googleUser.authorizationClient.authorizeScopes([
-            'email',
-            'profile',
-          ]);
-
       await _client.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: idToken,
-        accessToken: authorization.accessToken,
       );
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled ||
@@ -88,7 +77,7 @@ class AuthRepository {
   }
 
   Future<void> signOut() async {
-    await _client.auth.signOut();
     await GoogleSignIn.instance.signOut();
+    await _client.auth.signOut();
   }
 }

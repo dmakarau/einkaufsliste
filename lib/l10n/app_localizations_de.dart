@@ -301,4 +301,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get mitgliedEntfernen => 'Mitglied entfernen';
+
+  @override
+  String get signInWithGoogle => 'Mit Google anmelden';
 }

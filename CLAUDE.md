@@ -25,9 +25,16 @@ flutter gen-l10n
 ```
 
 ## Secrets
-Supabase credentials are passed at build time via `--dart-define-from-file=.dart_defines`.
+All credentials are passed at build time via `--dart-define-from-file=.dart_defines`.
 `.dart_defines` is gitignored — copy from `.dart_defines.example` and fill in real values.
 `lib/core/constants/supabase_config.dart` reads them via `String.fromEnvironment`.
+
+| Key | Description |
+|-----|-------------|
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_ANON_KEY` | Supabase anon key |
+| `GOOGLE_WEB_CLIENT_ID` | Web OAuth client ID (from Google Cloud Console) |
+| `GOOGLE_IOS_CLIENT_ID` | iOS OAuth client ID (from Google Cloud Console) |
 
 ## Architecture
 Feature-first clean architecture. See `.claude/rules/architecture.md` for layer rules and `.claude/rules/flutter.md` for Flutter/Cubit conventions.
@@ -63,6 +70,8 @@ lib/
 | Network image cache | `cached_network_image` |
 | File paths | `path_provider` + `path` |
 | HTTP client | `http` |
+| Google Sign-In | `google_sign_in` |
+| SVG rendering | `flutter_svg` (Google G logo inline SVG in `familie_screen.dart`) |
 | Test mocking | `mocktail` (dev) |
 
 ## Data Models
@@ -101,6 +110,8 @@ Modal screens (e.g. AddItemScreen) use `showModalBottomSheet`, not a route.
 
 **Auth sign-out behaviour:** `AuthCubit._onAuthStateChanged(null)` clears lists and items but intentionally does **not** clear categories. On iOS, the Supabase client fires a null auth event before restoring the session, which would empty the category box before re-seeding could complete. Categories are always overwritten by `pullAll()` on the next sign-in, so leaving them in place is safe.
 
+**Google Sign-In:** Uses `google_sign_in` v7 native flow (no browser redirect). `GoogleSignIn.instance.initialize()` is called in `main()` with `serverClientId` (Web client ID) and `clientId` (iOS client ID). `AuthRepository.signInWithGoogle()` calls `authenticate()`, extracts the ID token, then calls `supabase.auth.signInWithIdToken()`. The existing `_onAuthStateChanged` stream handles everything after that. `signOut()` also calls `GoogleSignIn.instance.signOut()` to revoke the Google session. Platform files: `ios/Runner/GoogleService-Info.plist` (iOS) and `android/app/google-services.json` (Android) — both committed; they contain public OAuth client IDs and an Android API key restricted to the app's package name + SHA-1 certificate fingerprint and to Identity Toolkit API + Token Service API only. Supabase dashboard requires **Skip nonce checks** enabled on the Google provider (iOS SDK omits the nonce).
+
 ## Testing
 
 Tests live in `test/blocs/` (Cubit unit tests), `test/services/` (service unit tests), `test/widgets/` (widget tests), and `test/helpers/` (shared fakes).
@@ -123,6 +134,6 @@ All tables have RLS enabled. See `.claude/rules/supabase.md` for RLS policy deta
 
 **Sharing model:** A list is shared with a group by setting `family_group_id`. RLS lets all accepted members read and write items in shared lists. Owner controls INSERT/UPDATE/DELETE on the list record itself.
 
-**Realtime:** `shopping_lists`, `shopping_items`, and `family_group_members` are in the Supabase realtime publication. `ShoppingListCubit` subscribes to group changes when the user is in a group.
+**Realtime:** `shopping_lists`, `shopping_items`, and `family_group_members` are in the Supabase realtime publication. `ShoppingListCubit` subscribes to `shopping_lists` changes (filtered by `family_group_id`) when the user is in a group. Item changes propagate to group members via a Postgres trigger (`shopping_items_touch_list`) that bumps `shopping_lists.updated_at` on every item INSERT/UPDATE/DELETE — the app does not subscribe to `shopping_items` Realtime events directly (Supabase cannot reliably evaluate the complex group-membership RLS policy at Realtime event time).
 
 **Storage:** bucket `shopping-item-images` (public). Images are uploaded by `SupabaseSyncService.pushItem()` when `imagePath` is a local file path; the local path is replaced with the public URL before the DB upsert.

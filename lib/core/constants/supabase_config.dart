@@ -12,4 +12,20 @@ abstract final class SupabaseConfig {
     'SUPABASE_ANON_KEY',
     defaultValue: '',
   );
+
+  // Web client ID from Google Cloud Console — required as serverClientId in
+  // GoogleSignIn.instance.initialize(); also registered in Supabase → Google provider.
+  static const googleWebClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+    defaultValue: '',
+  );
+
+  // iOS client ID from Google Cloud Console — passed as clientId in
+  // GoogleSignIn.instance.initialize(). The same value is also present in
+  // ios/Runner/GoogleService-Info.plist (CLIENT_ID), which the native SDK reads
+  // directly. Kept here for visibility alongside the other Google credentials.
+  static const googleIosClientId = String.fromEnvironment(
+    'GOOGLE_IOS_CLIENT_ID',
+    defaultValue: '',
+  );
 }

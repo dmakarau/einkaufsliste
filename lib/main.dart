@@ -36,6 +36,8 @@ void main() async {
     anonKey: SupabaseConfig.anonKey,
   );
 
+  await AuthRepository.initialize();
+
   await Hive.initFlutter();
   Hive.registerAdapter(ShoppingListModelAdapter());
   Hive.registerAdapter(ShoppingItemModelAdapter());

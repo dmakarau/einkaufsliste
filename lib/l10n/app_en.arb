@@ -104,5 +104,6 @@
   "gruppeLoeschenBestaetigung": "Delete the group and remove all members?",
   "gruppeUnbekannt": "Unknown group",
   "fehlerAufgetreten": "An error occurred. Please try again.",
-  "mitgliedEntfernen": "Remove member"
+  "mitgliedEntfernen": "Remove member",
+  "signInWithGoogle": "Sign in with Google"
 }

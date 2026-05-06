@@ -299,4 +299,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mitgliedEntfernen => 'Remove member';
+
+  @override
+  String get signInWithGoogle => 'Sign in with Google';
 }

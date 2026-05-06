@@ -1,6 +1,7 @@
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/constants/supabase_config.dart';
 import '../models/auth_user.dart';
 
 class AuthRepositoryException implements Exception {
@@ -15,6 +16,13 @@ class AuthRepositoryCancelledException implements Exception {
 
 class AuthRepository {
   const AuthRepository(this._client);
+
+  static Future<void> initialize() async {
+    await GoogleSignIn.instance.initialize(
+      serverClientId: SupabaseConfig.googleWebClientId,
+      clientId: SupabaseConfig.googleIosClientId,
+    );
+  }
 
   final SupabaseClient _client;
 
@@ -77,7 +85,11 @@ class AuthRepository {
   }
 
   Future<void> signOut() async {
-    await GoogleSignIn.instance.signOut();
+    try {
+      await GoogleSignIn.instance.signOut();
+    } catch (_) {
+      // Best-effort — Google session revocation must not block Supabase sign-out.
+    }
     await _client.auth.signOut();
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import 'package:uuid/uuid.dart';
@@ -37,10 +36,7 @@ void main() async {
     anonKey: SupabaseConfig.anonKey,
   );
 
-  await GoogleSignIn.instance.initialize(
-    serverClientId: SupabaseConfig.googleWebClientId,
-    clientId: SupabaseConfig.googleIosClientId,
-  );
+  await AuthRepository.initialize();
 
   await Hive.initFlutter();
   Hive.registerAdapter(ShoppingListModelAdapter());

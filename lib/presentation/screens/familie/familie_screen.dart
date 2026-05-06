@@ -577,18 +577,9 @@ class _LoginForm extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () => context.read<AuthCubit>().signInWithGoogle(),
-              icon: Container(
-                width: 24,
-                height: 24,
-                alignment: Alignment.center,
-                child: const Text(
-                  'G',
-                  style: TextStyle(
-                    color: AppColors.googleBlue,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+              icon: const CustomPaint(
+                size: Size(20, 20),
+                painter: _GoogleLogoPainter(),
               ),
               label: Text(context.l10n.signInWithGoogle),
               style: OutlinedButton.styleFrom(
@@ -605,4 +596,56 @@ class _LoginForm extends StatelessWidget {
       ),
     );
   }
+}
+
+class _GoogleLogoPainter extends CustomPainter {
+  const _GoogleLogoPainter();
+
+  static const _blue = Color(0xFF4285F4);
+  static const _red = Color(0xFFEA4335);
+  static const _yellow = Color(0xFFFBBC05);
+  static const _green = Color(0xFF34A853);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final r = size.width / 2;
+    final rect = Rect.fromCircle(center: Offset(cx, cy), radius: r);
+    final strokeWidth = size.width * 0.28;
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.butt;
+
+    const toRad = 3.14159265 / 180;
+
+    // Red: top gap
+    paint.color = _red;
+    canvas.drawArc(rect, -30 * toRad, 60 * toRad, false, paint);
+
+    // Yellow: bottom-right
+    paint.color = _yellow;
+    canvas.drawArc(rect, 30 * toRad, 70 * toRad, false, paint);
+
+    // Green: bottom-left
+    paint.color = _green;
+    canvas.drawArc(rect, 100 * toRad, 80 * toRad, false, paint);
+
+    // Blue: left arc
+    paint.color = _blue;
+    canvas.drawArc(rect, 180 * toRad, 150 * toRad, false, paint);
+
+    // Blue crossbar
+    paint
+      ..style = PaintingStyle.fill
+      ..color = _blue;
+    canvas.drawRect(
+      Rect.fromLTWH(cx, cy - strokeWidth / 2, r, strokeWidth),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

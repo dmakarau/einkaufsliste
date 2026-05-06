@@ -58,11 +58,20 @@ class FakeSyncService extends Fake implements SyncService {
   @override
   Future<void> unshareList(String listId) async => unsharedListIds.add(listId);
 
-  @override
-  void subscribeToGroupChanges(String groupId, VoidCallback onChanged) {}
+  VoidCallback? groupChangeCallback;
+  String? subscribedGroupId;
+  int unsubscribeCalled = 0;
 
   @override
-  void unsubscribeGroupChanges() {}
+  void subscribeToGroupChanges(String groupId, VoidCallback onChanged) {
+    subscribedGroupId = groupId;
+    groupChangeCallback = onChanged;
+  }
+
+  @override
+  void unsubscribeGroupChanges() => unsubscribeCalled++;
+
+  void simulateGroupChange() => groupChangeCallback?.call();
 }
 
 class MockShoppingListRepository extends Mock

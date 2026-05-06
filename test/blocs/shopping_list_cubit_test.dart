@@ -196,6 +196,37 @@ void main() {
     });
   });
 
+  group('watchGroup', () {
+    test('registers group id with sync service', () {
+      cubit.watchGroup('group-1');
+
+      expect(sync.subscribedGroupId, 'group-1');
+    });
+
+    test('group change triggers pullAll and reloads lists', () async {
+      sync.isAuthenticated = true;
+      when(() => listRepo.getAll()).thenReturn([]);
+
+      cubit.watchGroup('group-1');
+
+      final expectation = expectLater(
+        cubit.stream,
+        emits(isA<ShoppingListLoaded>()),
+      );
+
+      sync.simulateGroupChange();
+
+      await expectation;
+      expect(sync.pullAllCalled, 1);
+    });
+
+    test('stopWatching unsubscribes from sync service', () {
+      cubit.stopWatching();
+
+      expect(sync.unsubscribeCalled, 1);
+    });
+  });
+
   group('syncFromRemote', () {
     test('is no-op when not authenticated', () async {
       // sync.isAuthenticated defaults to false

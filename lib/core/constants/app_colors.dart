@@ -5,6 +5,7 @@ class AppColors {
 
   // UI
   static const Color primary = Color(0xFF007AFF); // iOS blue
+  static const Color googleBlue = Color(0xFF4285F4);
   static const Color background = Color(0xFFF2F2F7);
   static const Color surface = Colors.white;
   static const Color divider = Color(0xFFD1D1D6);

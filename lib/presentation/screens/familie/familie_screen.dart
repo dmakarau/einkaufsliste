@@ -584,7 +584,7 @@ class _LoginForm extends StatelessWidget {
                 child: const Text(
                   'G',
                   style: TextStyle(
-                    color: Color(0xFF4285F4),
+                    color: AppColors.googleBlue,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),

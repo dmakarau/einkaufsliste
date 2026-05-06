@@ -293,7 +293,7 @@ Images are uploaded automatically when an item with a local photo is synced.
 
 3. **Platform files** — replace the placeholders already in the repo:
    - Download `GoogleService-Info.plist` (iOS) → place at `ios/Runner/GoogleService-Info.plist`
-   - Create/download `google-services.json` (Android) → place at `android/app/google-services.json`
+   - For Android: create a Firebase project linked to the same Google Cloud project, add your Android app (package name + debug SHA-1 fingerprint from each dev machine), download `google-services.json` → place at `android/app/google-services.json`. Restrict the auto-created Android API key to Identity Toolkit API + Token Service API in Google Cloud Console.
    - Update the `CFBundleURLSchemes` entry in `ios/Runner/Info.plist` with your reversed iOS client ID (`REVERSED_CLIENT_ID` from `GoogleService-Info.plist`)
 
 4. Fill in `GOOGLE_WEB_CLIENT_ID` and `GOOGLE_IOS_CLIENT_ID` in `.dart_defines`

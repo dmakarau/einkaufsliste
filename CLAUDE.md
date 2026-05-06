@@ -71,6 +71,7 @@ lib/
 | File paths | `path_provider` + `path` |
 | HTTP client | `http` |
 | Google Sign-In | `google_sign_in` |
+| SVG rendering | `flutter_svg` (Google G logo inline SVG in `familie_screen.dart`) |
 | Test mocking | `mocktail` (dev) |
 
 ## Data Models

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/extensions/build_context_extensions.dart';
@@ -520,7 +521,7 @@ class _LoginForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
         children: [
@@ -577,10 +578,7 @@ class _LoginForm extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () => context.read<AuthCubit>().signInWithGoogle(),
-              icon: const CustomPaint(
-                size: Size(20, 20),
-                painter: _GoogleLogoPainter(),
-              ),
+              icon: SvgPicture.string(_kGoogleLogoSvg, width: 20, height: 20),
               label: Text(context.l10n.signInWithGoogle),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppColors.primary),
@@ -598,54 +596,11 @@ class _LoginForm extends StatelessWidget {
   }
 }
 
-class _GoogleLogoPainter extends CustomPainter {
-  const _GoogleLogoPainter();
-
-  static const _blue = Color(0xFF4285F4);
-  static const _red = Color(0xFFEA4335);
-  static const _yellow = Color(0xFFFBBC05);
-  static const _green = Color(0xFF34A853);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    final r = size.width / 2;
-    final rect = Rect.fromCircle(center: Offset(cx, cy), radius: r);
-    final strokeWidth = size.width * 0.28;
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.butt;
-
-    const toRad = 3.14159265 / 180;
-
-    // Red: top gap
-    paint.color = _red;
-    canvas.drawArc(rect, -30 * toRad, 60 * toRad, false, paint);
-
-    // Yellow: bottom-right
-    paint.color = _yellow;
-    canvas.drawArc(rect, 30 * toRad, 70 * toRad, false, paint);
-
-    // Green: bottom-left
-    paint.color = _green;
-    canvas.drawArc(rect, 100 * toRad, 80 * toRad, false, paint);
-
-    // Blue: left arc
-    paint.color = _blue;
-    canvas.drawArc(rect, 180 * toRad, 150 * toRad, false, paint);
-
-    // Blue crossbar
-    paint
-      ..style = PaintingStyle.fill
-      ..color = _blue;
-    canvas.drawRect(
-      Rect.fromLTWH(cx, cy - strokeWidth / 2, r, strokeWidth),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+const _kGoogleLogoSvg = '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 533.5 544.3">
+  <path fill="#4285F4" d="M533.5 278.4c0-18.5-1.5-37.1-4.7-55.3H272.1v104.8h147c-6.1 33.8-25.7 63.7-54.4 82.7v68h87.7c51.5-47.4 81.1-117.4 81.1-200.2z"/>
+  <path fill="#34A853" d="M272.1 544.3c73.4 0 135.3-24.1 180.4-65.7l-87.7-68c-24.4 16.6-55.9 26-92.6 26-71 0-131.2-47.9-152.8-112.3H28.9v70.1c46.2 91.9 140.3 149.9 243.2 149.9z"/>
+  <path fill="#FBBC05" d="M119.3 324.3c-11.4-33.8-11.4-70.4 0-104.2V150H28.9c-38.6 76.9-38.6 167.5 0 244.4l90.4-70.1z"/>
+  <path fill="#EA4335" d="M272.1 107.7c38.8-.6 76.3 14 104.4 40.8l77.7-77.7C405 24.6 339.7-.8 272.1 0 169.2 0 75.1 58 28.9 150l90.4 70.1c21.5-64.5 81.8-112.4 152.8-112.4z"/>
+</svg>
+''';

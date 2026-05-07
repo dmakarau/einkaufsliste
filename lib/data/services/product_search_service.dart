@@ -4,11 +4,18 @@ import 'package:http/http.dart' as http;
 import '../../core/constants/common_products.dart';
 
 class ProductSuggestion {
-  const ProductSuggestion({required this.name, this.brand, this.imageUrl});
+  const ProductSuggestion({
+    required this.name,
+    this.brand,
+    this.imageUrl,
+    this.categoryTags = const [],
+  });
 
   final String name;
   final String? brand;
   final String? imageUrl;
+  // Open Food Facts `categories_tags` with the `en:` prefix stripped.
+  final List<String> categoryTags;
 
   String get displayName =>
       (brand != null && brand!.isNotEmpty) ? '${brand!} $name' : name;
@@ -40,7 +47,8 @@ class ProductSearchService {
       final uri = Uri.https('search.openfoodfacts.org', '/search', {
         'q': query,
         'page_size': '100',
-        'fields': 'product_name,brands,image_front_url,countries_tags',
+        'fields':
+            'product_name,brands,image_front_url,countries_tags,categories_tags',
       });
       final response = await _client
           .get(uri, headers: {'User-Agent': 'EinkaufslisteApp/1.0'})
@@ -64,10 +72,21 @@ class ProductSearchService {
           final imageUrl = p['image_front_url'] is String
               ? p['image_front_url'] as String
               : null;
+          final rawTags = p['categories_tags'] as List<dynamic>? ?? [];
+          final categoryTags = rawTags
+              .cast<String>()
+              .where((t) => t.startsWith('en:'))
+              .map((t) => t.substring(3))
+              .toList();
           final key = '$brand|$name';
           if (seen.add(key) && results.length < 8) {
             results.add(
-              ProductSuggestion(name: name, brand: brand, imageUrl: imageUrl),
+              ProductSuggestion(
+                name: name,
+                brand: brand,
+                imageUrl: imageUrl,
+                categoryTags: categoryTags,
+              ),
             );
           }
         }

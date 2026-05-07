@@ -12,6 +12,7 @@ import '../../../core/extensions/build_context_extensions.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../data/models/category_model.dart';
 import '../../../data/repositories/category_repository.dart';
+import '../../../data/services/category_prediction_service.dart';
 import '../../../data/services/product_search_service.dart';
 import '../../blocs/shopping_item/shopping_item_cubit.dart';
 
@@ -42,6 +43,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
   List<CategoryModel> _categories = [];
   StreamSubscription<void>? _catSubscription;
   final _categoryRepo = CategoryRepository();
+  final _predictor = CategoryPredictionService();
+  bool _userPickedCategory = false;
 
   late final _searchService = widget._searchService ?? ProductSearchService();
   late final _ownsSearchService = widget._searchService == null;
@@ -89,6 +92,10 @@ class _AddItemScreenState extends State<AddItemScreen> {
       return;
     }
     // Show local results instantly, then upgrade with API results.
+    if (!_userPickedCategory) {
+      final predictedId = _predictor.predictFromQuery(query, _categories);
+      if (predictedId != null) _selectedCategoryId = predictedId;
+    }
     setState(() {
       _suggestions = _searchService.searchLocal(query);
       _suggestionImageUrl = null;
@@ -107,6 +114,13 @@ class _AddItemScreenState extends State<AddItemScreen> {
     _nameController.text = name;
     _nameController.selection = TextSelection.collapsed(offset: name.length);
     _debounce?.cancel();
+    if (!_userPickedCategory && suggestion.categoryTags.isNotEmpty) {
+      final predictedId = _predictor.predictFromOpenFoodFactsTags(
+        suggestion.categoryTags,
+        _categories,
+      );
+      if (predictedId != null) _selectedCategoryId = predictedId;
+    }
     setState(() {
       _suggestions = [];
       _suggestionImageUrl = suggestion.imageUrl;
@@ -270,6 +284,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                             : null,
                         onTap: () => setState(() {
                           _selectedCategoryId = cat.id;
+                          _userPickedCategory = true;
                           _categoryPickerOpen = false;
                         }),
                       ),

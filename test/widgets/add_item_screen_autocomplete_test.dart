@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:shopping_list/core/constants/app_strings.dart';
 import 'package:shopping_list/core/constants/hive_boxes.dart';
 import 'package:shopping_list/data/models/category_model.dart';
 import 'package:shopping_list/data/models/shopping_item_model.dart';
@@ -16,11 +17,15 @@ import 'package:shopping_list/presentation/screens/add_item/add_item_screen.dart
 
 import '../helpers/fake_sync_service.dart';
 
-CategoryModel _makeCategory() => CategoryModel(
-  id: 'cat-1',
-  name: 'Sonstiges',
+CategoryModel _makeCategory({
+  String id = 'cat-1',
+  String name = 'Sonstiges',
+  int sortOrder = 0,
+}) => CategoryModel(
+  id: id,
+  name: name,
   colorValue: 0xFF9E9E9E,
-  sortOrder: 0,
+  sortOrder: sortOrder,
   isDefault: true,
 );
 
@@ -65,8 +70,21 @@ void main() {
       Hive.registerAdapter(ShoppingItemModelAdapter());
     }
     final catBox = await Hive.openBox<CategoryModel>(HiveBoxes.categories);
-    final cat = _makeCategory();
-    await catBox.put(cat.id, cat);
+    final defaultCat = _makeCategory();
+    await catBox.put(defaultCat.id, defaultCat);
+    // Seed extra categories needed by prediction tests.
+    final milchCat = _makeCategory(
+      id: 'cat-milch',
+      name: AppStrings.catMilchEier,
+      sortOrder: 1,
+    );
+    final getraenkeCat = _makeCategory(
+      id: 'cat-getraenke',
+      name: AppStrings.catGetraenke,
+      sortOrder: 2,
+    );
+    await catBox.put(milchCat.id, milchCat);
+    await catBox.put(getraenkeCat.id, getraenkeCat);
 
     itemRepo = MockShoppingItemRepository();
     when(() => itemRepo.getByListId(any())).thenReturn([]);
@@ -181,6 +199,62 @@ void main() {
               as ShoppingItemModel;
       expect(captured.name, equals('W'));
       expect(captured.imagePath, isNull);
+    },
+  );
+
+  testWidgets('typing Milch auto-selects Milchprodukte category', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildScreen(_StubSearchService([])));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    await tester.enterText(find.byType(TextField).first, 'Milch');
+    await tester.pump();
+
+    // English locale renders the stored name "Milchprodukte und Eier" as "Dairy & Eggs".
+    expect(find.text('Dairy & Eggs'), findsOneWidget);
+  });
+
+  testWidgets(
+    'selecting suggestion with wine tags auto-selects Getränke category',
+    (tester) async {
+      final suggestions = [
+        const ProductSuggestion(
+          name: 'Rotwein',
+          categoryTags: ['wines', 'alcoholic-beverages', 'beverages'],
+        ),
+      ];
+      await tester.pumpWidget(buildScreen(_StubSearchService(suggestions)));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      await tester.enterText(find.byType(TextField).first, 'Ro');
+      await tester.pump();
+      await tester.tap(find.text('Rotwein'));
+      await tester.pump();
+
+      // English locale renders "Getränke" as "Drinks".
+      expect(find.text('Drinks'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'manual category tap freezes prediction — subsequent typing does not change it',
+    (tester) async {
+      await tester.pumpWidget(buildScreen(_StubSearchService([])));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Open the category picker and tap Drinks (= "Getränke" in English locale).
+      await tester.tap(find.byIcon(Icons.arrow_drop_down));
+      await tester.pump();
+      await tester.tap(find.text('Drinks').last);
+      await tester.pump();
+
+      // Now type something that would normally predict Milchprodukte.
+      await tester.enterText(find.byType(TextField).first, 'Milch');
+      await tester.pump();
+
+      // Category should still show Drinks (frozen by manual tap).
+      expect(find.text('Drinks'), findsOneWidget);
     },
   );
 }

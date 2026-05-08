@@ -103,6 +103,7 @@ void main() {
 
   Widget buildScreen(ProductSearchService searchService) {
     return MaterialApp(
+      locale: const Locale('en'),
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

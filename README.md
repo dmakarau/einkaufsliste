@@ -7,7 +7,7 @@ A German shopping list app for iOS and Android built with Flutter. Supports mult
 ## Features
 
 - Multiple named shopping lists (one protected default list)
-- Items with name, quantity, unit, category, and optional photo; product name autocomplete powered by Open Food Facts (with offline fallback)
+- Items with name, quantity, unit, category, and optional photo; product name autocomplete powered by Open Food Facts (with offline fallback); automatic category prediction from typed name and Open Food Facts taxonomy tags
 - 13 default categories with colour coding
 - Check/uncheck items; delete or edit at any time
 - Sign up / sign in (email+password or Google) / sign out — data synced to your Supabase account

@@ -29,11 +29,13 @@ void main() {
     String? brands,
     String? imageUrl,
     List<String> countryTags = const ['en:germany'],
+    List<String> categoryTags = const [],
   }) => {
     'product_name': name,
     'brands': brands,
     'image_front_url': imageUrl,
     'countries_tags': countryTags,
+    'categories_tags': categoryTags,
   };
 
   group('searchLocal', () {
@@ -145,6 +147,62 @@ void main() {
 
       final results = await service.searchRemote('Milch');
       expect(results, isNull);
+    });
+
+    test('categoryTags strips en: prefix and ignores other locales', () async {
+      when(
+        () => mockClient.get(any(), headers: any(named: 'headers')),
+      ).thenAnswer(
+        (_) async => ok(
+          makeResponse([
+            hit(
+              name: 'Rotwein',
+              brands: 'Muster',
+              categoryTags: [
+                'en:wines',
+                'en:alcoholic-beverages',
+                'fr:vins',
+                'de:weine',
+              ],
+            ),
+            hit(name: 'Weißwein', brands: 'Muster', categoryTags: ['en:wines']),
+            hit(name: 'Rosé', brands: 'Muster', categoryTags: ['en:wines']),
+            hit(name: 'Sekt', brands: 'Muster', categoryTags: ['en:wines']),
+          ]),
+        ),
+      );
+
+      final results = await service.searchRemote('Wein');
+      expect(results, isNotNull);
+      expect(
+        results!.first.categoryTags,
+        equals(['wines', 'alcoholic-beverages']),
+      );
+    });
+
+    test('categoryTags defaults to empty list when field is absent', () async {
+      when(
+        () => mockClient.get(any(), headers: any(named: 'headers')),
+      ).thenAnswer(
+        (_) async => ok(
+          makeResponse([
+            // No categories_tags field in response.
+            {
+              'product_name': 'Milch',
+              'brands': 'Weihenstephan',
+              'image_front_url': null,
+              'countries_tags': ['en:germany'],
+            },
+            hit(name: 'Vollmilch', brands: 'Weihenstephan'),
+            hit(name: 'Bio-Milch', brands: 'Alnatura'),
+            hit(name: 'H-Milch', brands: 'Ja'),
+          ]),
+        ),
+      );
+
+      final results = await service.searchRemote('Milch');
+      expect(results, isNotNull);
+      expect(results!.first.categoryTags, isEmpty);
     });
 
     test('brand is null when brands field is empty', () async {

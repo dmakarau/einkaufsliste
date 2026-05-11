@@ -173,13 +173,18 @@ create policy "delete_group" on family_groups for delete
   using (owner_id = auth.uid());
 
 -- family_group_members
+-- The fourth OR clause (owner lookup via family_groups) is required for Supabase
+-- Realtime to evaluate DELETE events. Supabase cannot reliably resolve the
+-- self-referential subquery (querying family_group_members from within its own
+-- RLS policy) at Realtime event time, but can look up family_groups directly.
 create policy "select_members" on family_group_members for select using (
-  user_id = auth.uid()
-  or email = (select email from auth.users where id = auth.uid())
-  or group_id in (
+  (user_id = auth.uid())
+  or (email = auth.email())
+  or (group_id in (
     select group_id from family_group_members
     where user_id = auth.uid() and status = 'accepted'
-  )
+  ))
+  or (group_id in (select id from family_groups where owner_id = auth.uid()))
 );
 create policy "insert_invite" on family_group_members for insert
   with check (
@@ -264,6 +269,29 @@ In Supabase Dashboard → Database → Replication, add these tables to the real
 - `shopping_lists`
 - `shopping_items`
 - `family_group_members`
+
+Then run these two SQL statements in the SQL Editor:
+
+```sql
+-- Required so Supabase Realtime DELETE events carry full row data for RLS evaluation.
+-- Without this, DELETE events only include the PK and are silently dropped.
+ALTER TABLE family_group_members REPLICA IDENTITY FULL;
+
+-- Trigger bumps shopping_lists.updated_at on every item change so the app can
+-- subscribe to shopping_lists changes only (item Realtime is not reliable for
+-- group membership RLS evaluation).
+create or replace function public.touch_list_updated_at()
+returns trigger language plpgsql as $$
+begin
+  update shopping_lists set updated_at = now() where id = NEW.list_id;
+  return NEW;
+end;
+$$;
+
+create trigger shopping_items_touch_list
+  after insert or update or delete on shopping_items
+  for each row execute procedure public.touch_list_updated_at();
+```
 
 ### 4. Set up Supabase Storage
 

@@ -89,10 +89,33 @@
 - **DELETE**: owner only
 
 ### `family_group_members`
-- **SELECT**: self (by `user_id`), invited email, or any accepted group member
+- **SELECT**: self (by `user_id`), invited email (`auth.email()`), any accepted group member (`get_my_accepted_group_ids()`), **or group owner** (`group_id IN (SELECT id FROM family_groups WHERE owner_id = auth.uid())`)
 - **INSERT**: group owner only
 - **UPDATE**: self (to accept) or group owner (to manage members)
 - **DELETE**: self (to leave) or group owner (to remove member)
+
+> **Realtime requirements** — three one-time SQL changes are needed for `family_group_members` Realtime to work:
+> ```sql
+> -- 1. Add to the Realtime publication (not included by default)
+> ALTER PUBLICATION supabase_realtime ADD TABLE family_group_members;
+>
+> -- 2. Full replica identity so DELETE events include all columns for RLS evaluation
+> --    (default only includes PK — Supabase drops DELETE events it can't evaluate)
+> ALTER TABLE family_group_members REPLICA IDENTITY FULL;
+>
+> -- 3. Add owner check to SELECT policy so Supabase Realtime can evaluate it
+> --    without the self-referential get_my_accepted_group_ids() subquery,
+> --    which Realtime cannot reliably resolve at event time.
+> DROP POLICY IF EXISTS "select_members" ON family_group_members;
+> CREATE POLICY "select_members" ON family_group_members
+> FOR SELECT USING (
+>   (user_id = auth.uid())
+>   OR (email = auth.email())
+>   OR (group_id IN (SELECT get_my_accepted_group_ids()))
+>   OR (group_id IN (SELECT id FROM family_groups WHERE owner_id = auth.uid()))
+> );
+> ```
+> Without these, INSERT/UPDATE events are silently dropped (table not in publication) and DELETE events never reach the admin (missing row data for RLS).
 
 ### `shopping_lists`
 - **SELECT**: `owner_id = uid` OR `family_group_id IN (accepted memberships)`
@@ -136,3 +159,4 @@
 - `pushList()` always includes `'family_group_id': list.familyGroupId` in the upsert (null for personal lists).
 - `shareList()` / `unshareList()` update only the `family_group_id` column on `shopping_lists` in Supabase; the local Hive model is updated via `copyWith(familyGroupId: ...)`.
 - Realtime subscription key: channel name `'group_$groupId'`, subscribes to `shopping_lists` filtered by `family_group_id` only. Item changes are propagated indirectly via a Postgres trigger (`shopping_items_touch_list`) that bumps `shopping_lists.updated_at` on every item INSERT/UPDATE/DELETE. The app does NOT subscribe to `shopping_items` Realtime events directly — Supabase cannot reliably evaluate the complex group-membership RLS policy at Realtime event time, so cross-user item events are silently dropped.
+- `family_group_members` Realtime: channel `'members_$groupId'` (admin/member list updates) and `'invites_$uid'` (incoming invite for non-members). Both require the three SQL changes listed in the RLS section above. Key lessons: (1) tables must be explicitly added to `supabase_realtime` publication; (2) `REPLICA IDENTITY FULL` is required for DELETE events; (3) self-referential subqueries in RLS policies (`get_my_accepted_group_ids()` queries `family_group_members` itself) are not reliably evaluated by Realtime — replace with a lookup on a different table (`family_groups WHERE owner_id = auth.uid()`).

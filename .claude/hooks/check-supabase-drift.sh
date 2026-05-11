@@ -1,13 +1,31 @@
 #!/usr/bin/env bash
 # PreToolUse hook: warns about uncommitted Supabase schema drift before git commits.
 # Receives tool input JSON on stdin. Exits 1 (blocks the commit) if drift is detected.
+#
+# Skip this check for a single commit by setting SKIP_SUPABASE_CHECK=1.
 
 set -euo pipefail
 
+# Allow callers to opt out of the slow diff check
+if [ "${SKIP_SUPABASE_CHECK:-0}" = "1" ]; then
+  exit 0
+fi
+
 input=$(cat)
 
-# Only trigger on git commit commands
-if ! echo "$input" | grep -q '"git commit'; then
+# Extract the bash command from the JSON tool input using Python (avoids matching
+# against the commit message body which could contain "git commit" as text).
+command=$(echo "$input" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    print(data.get('tool_input', data).get('command', ''))
+except Exception:
+    pass
+" 2>/dev/null || true)
+
+# Only trigger on actual git commit invocations, not messages about them
+if ! echo "$command" | grep -qE '^git commit'; then
   exit 0
 fi
 
@@ -40,6 +58,7 @@ if [ "${real_changes:-0}" -gt 0 ]; then
   echo "$diff_output"
   echo ""
   echo "Run /supabase-sync to capture the changes as a migration file, then retry the commit."
+  echo "Or set SKIP_SUPABASE_CHECK=1 to bypass this check for the current commit."
   exit 1
 fi
 

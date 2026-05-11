@@ -68,7 +68,9 @@ class FamilyCubit extends Cubit<FamilyState> {
       // UI updates immediately when the admin sends one.
       final email = _authRepo.currentUser?.email;
       if (email != null) {
-        _groupRepo.subscribeToInvites(email, loadGroupStatus);
+        _groupRepo.subscribeToInvites(email, () {
+          if (!isClosed) loadGroupStatus();
+        });
       }
       emit(const FamilyNoGroup());
     } on FamilyGroupRepositoryException catch (e) {

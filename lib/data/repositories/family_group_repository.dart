@@ -9,9 +9,10 @@ class FamilyGroupRepositoryException implements Exception {
 }
 
 class FamilyGroupRepository {
-  const FamilyGroupRepository(this._client);
+  FamilyGroupRepository(this._client);
 
   final SupabaseClient _client;
+  RealtimeChannel? _membersChannel;
 
   String? get _uid => _client.auth.currentUser?.id;
   String? get _email => _client.auth.currentUser?.email;
@@ -168,6 +169,37 @@ class FamilyGroupRepository {
       await _client.from('family_groups').delete().eq('id', groupId);
     } on PostgrestException catch (e) {
       throw FamilyGroupRepositoryException(e.message);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Realtime subscription for member changes
+  // ---------------------------------------------------------------------------
+
+  /// Subscribes to INSERT/UPDATE/DELETE on [groupId]'s member rows.
+  /// Calls [onChanged] on any event so the caller can refresh the list.
+  void subscribeToMemberChanges(String groupId, void Function() onChanged) {
+    unsubscribeMemberChanges();
+    _membersChannel = _client
+        .channel('members_$groupId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'family_group_members',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'group_id',
+            value: groupId,
+          ),
+          callback: (_) => onChanged(),
+        )
+        .subscribe();
+  }
+
+  void unsubscribeMemberChanges() {
+    if (_membersChannel != null) {
+      _client.removeChannel(_membersChannel!);
+      _membersChannel = null;
     }
   }
 }

@@ -33,11 +33,13 @@ class FamilyCubit extends Cubit<FamilyState> {
         final members = await _groupRepo.getMembers(group.id);
         final isOwner = group.ownerId == _authRepo.currentUser!.id;
         emit(FamilyHasGroup(group: group, members: members, isOwner: isOwner));
+        _groupRepo.subscribeToMemberChanges(group.id, _refreshMembers);
         return;
       }
 
       // Check for pending invitations by email.
       final invites = await _groupRepo.getPendingInvites();
+      _groupRepo.unsubscribeMemberChanges();
       if (invites.isNotEmpty) {
         final invite = invites.first;
         // Requires RLS on family_groups to allow pending invitees to SELECT
@@ -64,6 +66,23 @@ class FamilyCubit extends Cubit<FamilyState> {
       emit(const FamilyNoGroup());
     } on FamilyGroupRepositoryException catch (e) {
       emit(FamilyError(e.message));
+    }
+  }
+
+  Future<void> _refreshMembers() async {
+    final current = state;
+    if (current is! FamilyHasGroup) return;
+    try {
+      final members = await _groupRepo.getMembers(current.group.id);
+      emit(
+        FamilyHasGroup(
+          group: current.group,
+          members: members,
+          isOwner: current.isOwner,
+        ),
+      );
+    } on FamilyGroupRepositoryException {
+      // Best-effort background refresh — don't surface an error.
     }
   }
 
@@ -129,6 +148,7 @@ class FamilyCubit extends Cubit<FamilyState> {
     emit(const FamilyLoading());
     try {
       await _groupRepo.leaveGroup(current.group.id);
+      _groupRepo.unsubscribeMemberChanges();
       emit(const FamilyNoGroup());
     } on FamilyGroupRepositoryException catch (e) {
       emit(FamilyError(e.message));
@@ -145,6 +165,7 @@ class FamilyCubit extends Cubit<FamilyState> {
     emit(const FamilyLoading());
     try {
       await _groupRepo.deleteGroup(current.group.id);
+      _groupRepo.unsubscribeMemberChanges();
       emit(const FamilyNoGroup());
     } on FamilyGroupRepositoryException catch (e) {
       emit(FamilyError(e.message));
@@ -160,6 +181,8 @@ class FamilyCubit extends Cubit<FamilyState> {
     if (current is! FamilyHasGroup || !current.isOwner) return;
     try {
       await _groupRepo.removeMember(memberId);
+      // Realtime will fire _refreshMembers() — explicit reload here ensures the
+      // UI updates immediately even if the Realtime event arrives with a delay.
       final members = await _groupRepo.getMembers(current.group.id);
       emit(
         FamilyHasGroup(
@@ -171,5 +194,11 @@ class FamilyCubit extends Cubit<FamilyState> {
     } on FamilyGroupRepositoryException catch (e) {
       emit(FamilyError(e.message));
     }
+  }
+
+  @override
+  Future<void> close() {
+    _groupRepo.unsubscribeMemberChanges();
+    return super.close();
   }
 }

@@ -157,7 +157,7 @@ Modal screens (e.g. AddItemScreen) use `showModalBottomSheet`, not a route.
 
 Tests live in `test/blocs/` (Cubit unit tests), `test/services/` (service unit tests), `test/widgets/` (widget tests), and `test/helpers/` (shared fakes).
 Covered: `ShoppingListCubit`, `ShoppingItemCubit`, `AuthCubit`, `SettingsCubit`, `ProductSearchService`, `CategoryPredictionService`, `AddItemScreen` (autocomplete + category prediction behaviour).
-Not covered: `AuthRepository`, `SupabaseSyncService`, `FamilyGroupRepository`, `FamilyCubit` (wrap Supabase directly, no injection point).
+Not covered: `AuthRepository`, `SupabaseSyncService`, `FamilyGroupRepository`, `FamilyCubit` (wrap Supabase directly, no injection point). Specifically, `FamilyCubit`'s Realtime paths (`_refreshMembers`, `subscribeToMemberChanges`, `subscribeToInvites`) have no unit tests — they require a live Supabase channel and are verified on-device only.
 
 See `.claude/rules/testing.md` for test infrastructure, the `MockAuthRepository` gotcha, async assertion patterns, and Hive test setup.
 

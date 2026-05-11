@@ -25,6 +25,10 @@ class FamilyCubit extends Cubit<FamilyState> {
 
   Future<void> loadGroupStatus() async {
     if (_authRepo.currentUser == null) return;
+    // Tear down any existing channels before re-evaluating state so no channel
+    // is ever left open regardless of which branch below is taken.
+    _groupRepo.unsubscribeMemberChanges();
+    _groupRepo.unsubscribeInvites();
     emit(const FamilyLoading());
     try {
       // Check if already in a group (own or joined).
@@ -39,13 +43,11 @@ class FamilyCubit extends Cubit<FamilyState> {
 
       // Check for pending invitations by email.
       final invites = await _groupRepo.getPendingInvites();
-      _groupRepo.unsubscribeMemberChanges();
       if (invites.isNotEmpty) {
         final invite = invites.first;
         // Requires RLS on family_groups to allow pending invitees to SELECT
         // (see .claude/rules/supabase.md — run the extended RLS policy if needed).
         final pendingGroup = await _groupRepo.getGroupById(invite.groupId);
-        _groupRepo.unsubscribeInvites();
         if (pendingGroup != null) {
           emit(FamilyHasPendingInvite(group: pendingGroup));
           return;
@@ -94,7 +96,9 @@ class FamilyCubit extends Cubit<FamilyState> {
         // Use microtask so loadGroupStatus() runs after the current Realtime
         // callback exits — removing a channel from within its own callback can
         // cause the Supabase client to behave unexpectedly.
-        Future.microtask(loadGroupStatus);
+        Future.microtask(() {
+          if (!isClosed) loadGroupStatus();
+        });
         return;
       }
       emit(
@@ -105,7 +109,9 @@ class FamilyCubit extends Cubit<FamilyState> {
         ),
       );
     } on FamilyGroupRepositoryException {
-      Future.microtask(loadGroupStatus);
+      Future.microtask(() {
+        if (!isClosed) loadGroupStatus();
+      });
     }
   }
 

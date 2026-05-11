@@ -46,7 +46,7 @@ fi
 
 echo "Checking for uncommitted Supabase schema changes..."
 
-diff_output=$(supabase db diff --password "$SUPABASE_DB_PASSWORD" 2>&1 || true)
+diff_output=$(timeout 60 supabase db diff --password "$SUPABASE_DB_PASSWORD" 2>&1 || true)
 
 # Ignore output that is only comments/blank lines — those are not real schema changes
 real_changes=$(echo "$diff_output" | grep -vE '^(--|[[:space:]]*$)' | grep -cE '(CREATE|ALTER|DROP)' || true)

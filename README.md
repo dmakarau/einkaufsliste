@@ -297,8 +297,9 @@ ALTER TABLE family_group_members REPLICA IDENTITY FULL;
 create or replace function public.touch_list_updated_at()
 returns trigger language plpgsql as $$
 begin
-  update shopping_lists set updated_at = now() where id = NEW.list_id;
-  return NEW;
+  update shopping_lists set updated_at = now()
+  where id = coalesce(NEW.list_id, OLD.list_id);
+  return coalesce(NEW, OLD);
 end;
 $$;
 

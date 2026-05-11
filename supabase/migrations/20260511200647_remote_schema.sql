@@ -301,7 +301,16 @@ CREATE POLICY "select_members" ON "public"."family_group_members" FOR SELECT USI
 
 
 
-CREATE POLICY "select_my_group" ON "public"."family_groups" FOR SELECT USING ((("owner_id" = "auth"."uid"()) OR ("id" IN ( SELECT "public"."get_my_accepted_group_ids"() AS "get_my_accepted_group_ids"))));
+CREATE POLICY "select_my_group" ON "public"."family_groups" FOR SELECT USING (
+  ("owner_id" = "auth"."uid"())
+  OR ("id" IN ( SELECT "public"."get_my_accepted_group_ids"() AS "get_my_accepted_group_ids"))
+  OR ("id" IN (
+    SELECT "fgm"."group_id"
+    FROM "public"."family_group_members" "fgm"
+    WHERE ("fgm"."email" = ( SELECT "u"."email" FROM "auth"."users" "u" WHERE ("u"."id" = "auth"."uid"())))
+      AND ("fgm"."status" = 'pending')
+  ))
+);
 
 
 

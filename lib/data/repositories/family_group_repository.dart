@@ -202,4 +202,40 @@ class FamilyGroupRepository {
       _membersChannel = null;
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // Realtime subscription for incoming invites (used when not yet in a group)
+  // ---------------------------------------------------------------------------
+
+  RealtimeChannel? _invitesChannel;
+
+  /// Subscribes to INSERT events on [family_group_members] where the invited
+  /// [email] matches. Calls [onInvite] so the caller can call loadGroupStatus.
+  void subscribeToInvites(String email, void Function() onInvite) {
+    unsubscribeInvites();
+    // Use uid (UUID) as the channel name — email contains @ and . which can
+    // break Supabase Realtime channel name parsing.
+    final uid = _uid ?? email;
+    _invitesChannel = _client
+        .channel('invites_$uid')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'family_group_members',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'email',
+            value: email,
+          ),
+          callback: (_) => onInvite(),
+        )
+        .subscribe();
+  }
+
+  void unsubscribeInvites() {
+    if (_invitesChannel != null) {
+      _client.removeChannel(_invitesChannel!);
+      _invitesChannel = null;
+    }
+  }
 }

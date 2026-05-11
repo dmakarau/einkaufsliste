@@ -45,6 +45,7 @@ class FamilyCubit extends Cubit<FamilyState> {
         // Requires RLS on family_groups to allow pending invitees to SELECT
         // (see .claude/rules/supabase.md — run the extended RLS policy if needed).
         final pendingGroup = await _groupRepo.getGroupById(invite.groupId);
+        _groupRepo.unsubscribeInvites();
         if (pendingGroup != null) {
           emit(FamilyHasPendingInvite(group: pendingGroup));
           return;
@@ -63,6 +64,12 @@ class FamilyCubit extends Cubit<FamilyState> {
         return;
       }
 
+      // No group and no pending invite — subscribe to incoming invites so the
+      // UI updates immediately when the admin sends one.
+      final email = _authRepo.currentUser?.email;
+      if (email != null) {
+        _groupRepo.subscribeToInvites(email, loadGroupStatus);
+      }
       emit(const FamilyNoGroup());
     } on FamilyGroupRepositoryException catch (e) {
       emit(FamilyError(e.message));
@@ -74,6 +81,20 @@ class FamilyCubit extends Cubit<FamilyState> {
     if (current is! FamilyHasGroup) return;
     try {
       final members = await _groupRepo.getMembers(current.group.id);
+      final uid = _authRepo.currentUser?.id;
+      final email = _authRepo.currentUser?.email;
+      // Only accepted rows count — pending invite rows for the same email also
+      // pass RLS (email = auth.email()) and would falsely signal still-member.
+      final stillMember = members.any(
+        (m) => m.isAccepted && (m.userId == uid || m.email == email),
+      );
+      if (!stillMember) {
+        // Use microtask so loadGroupStatus() runs after the current Realtime
+        // callback exits — removing a channel from within its own callback can
+        // cause the Supabase client to behave unexpectedly.
+        Future.microtask(loadGroupStatus);
+        return;
+      }
       emit(
         FamilyHasGroup(
           group: current.group,
@@ -82,7 +103,7 @@ class FamilyCubit extends Cubit<FamilyState> {
         ),
       );
     } on FamilyGroupRepositoryException {
-      // Best-effort background refresh — don't surface an error.
+      Future.microtask(loadGroupStatus);
     }
   }
 
@@ -199,6 +220,7 @@ class FamilyCubit extends Cubit<FamilyState> {
   @override
   Future<void> close() {
     _groupRepo.unsubscribeMemberChanges();
+    _groupRepo.unsubscribeInvites();
     return super.close();
   }
 }

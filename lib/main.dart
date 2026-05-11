@@ -189,6 +189,12 @@ class _AppContentState extends State<_AppContent> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       context.read<ShoppingListCubit>().syncFromRemote();
+      // Guard: don't call loadGroupStatus during the OAuth redirect window
+      // (resumed fires before the session is established, causing a stale-JWT
+      // query that throws FamilyGroupRepositoryException → FamilyError).
+      if (context.read<AuthCubit>().state is AuthAuthenticated) {
+        context.read<FamilyCubit>().loadGroupStatus();
+      }
     }
   }
 
@@ -198,10 +204,19 @@ class _AppContentState extends State<_AppContent> with WidgetsBindingObserver {
     return MultiBlocListener(
       listeners: [
         BlocListener<AuthCubit, AuthState>(
-          // Only react to genuine auth transitions, not token refreshes
-          // (which re-emit AuthAuthenticated without changing the state type).
+          // React to genuine auth transitions (type changes) and to the
+          // Google cold-start case where TOKEN_REFRESHED fires after
+          // checkAuthStatus already emitted AuthAuthenticated(isSynced:false):
+          // pullAll() completes and emits AuthAuthenticated(isSynced:true),
+          // which has the same runtimeType but different props — so we must
+          // also check the isSynced transition to call loadLists() with
+          // fresh Hive data.
           listenWhen: (previous, current) =>
-              previous.runtimeType != current.runtimeType,
+              previous.runtimeType != current.runtimeType ||
+              (previous is AuthAuthenticated &&
+                  !previous.isSynced &&
+                  current is AuthAuthenticated &&
+                  current.isSynced),
           listener: (context, state) async {
             final listCubit = context.read<ShoppingListCubit>();
             final itemCubit = context.read<ShoppingItemCubit>();

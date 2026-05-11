@@ -19,11 +19,12 @@ final class AuthLoading extends AuthState {
 
 final class AuthAuthenticated extends AuthState {
   final AppUser user;
+  final bool isSynced;
 
-  const AuthAuthenticated(this.user);
+  const AuthAuthenticated(this.user, {this.isSynced = false});
 
   @override
-  List<Object?> get props => [user.id];
+  List<Object?> get props => [user.id, isSynced];
 }
 
 final class AuthUnauthenticated extends AuthState {

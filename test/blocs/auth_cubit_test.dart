@@ -272,6 +272,31 @@ void main() {
     );
 
     test(
+      'emits AuthAuthenticated(isSynced:true) from stream after checkAuthStatus',
+      () async {
+        // Simulates Google cold start: checkAuthStatus emits isSynced:false,
+        // then TOKEN_REFRESHED arrives via the stream and completes pullAll().
+        authRepo.setCurrentUser(const AppUser(id: 'u1', email: 'a@b.com'));
+        cubit.checkAuthStatus();
+        expect((cubit.state as AuthAuthenticated).isSynced, isFalse);
+
+        final expectation = expectLater(
+          cubit.stream,
+          emits(
+            isA<AuthAuthenticated>().having(
+              (s) => s.isSynced,
+              'isSynced',
+              isTrue,
+            ),
+          ),
+        );
+        authRepo.emitUser(const AppUser(id: 'u1', email: 'a@b.com'));
+        await expectation;
+        expect(sync.pullAllCalled, 1);
+      },
+    );
+
+    test(
       'clears list and item repos and emits AuthUnauthenticated when user leaves',
       () async {
         when(() => listRepo.clearAll()).thenAnswer((_) async {});

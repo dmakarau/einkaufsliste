@@ -11,7 +11,25 @@
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(supabase db diff:*)",
+      "Bash(supabase db pull:*)",
+      "Bash(supabase db dump:*)",
+      "Bash(supabase migration list:*)",
+      "Bash(supabase migration repair:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/check-supabase-drift.sh"
+          }
+        ]
+      }
     ]
   }
 }

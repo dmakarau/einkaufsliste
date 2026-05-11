@@ -47,6 +47,32 @@ All credentials are passed at build time via `--dart-define-from-file=.dart_defi
 | `GOOGLE_WEB_CLIENT_ID` | Web OAuth client ID (from Google Cloud Console) |
 | `GOOGLE_IOS_CLIENT_ID` | iOS OAuth client ID (from Google Cloud Console) |
 
+`.env.supabase` is a separate gitignored file used by the Supabase CLI and the pre-commit drift hook:
+```
+SUPABASE_DB_PASSWORD=your_db_password
+```
+
+## Supabase Schema Management
+The `supabase/` folder contains the CLI config and all migrations. The baseline is `supabase/migrations/20260511200647_remote_schema.sql`. Requires Docker Desktop running.
+
+```bash
+# Apply all pending migrations to the remote database
+supabase db push --password $SUPABASE_DB_PASSWORD
+
+# Pull schema changes made directly in the Supabase dashboard
+supabase db pull --password $SUPABASE_DB_PASSWORD
+
+# Generate a named diff (preferred for surgical changes)
+supabase db diff --password $SUPABASE_DB_PASSWORD -f describe_the_change
+
+# List migration history
+supabase migration list --password $SUPABASE_DB_PASSWORD
+```
+
+**After making a schema change in the Supabase dashboard:** run `/supabase-sync` — Claude detects the diff, writes a named migration file, and commits it.
+
+**Pre-commit hook:** every `git commit` automatically runs `supabase db diff`. If uncommitted schema changes are detected, the commit is blocked and `/supabase-sync` is suggested.
+
 ## Architecture
 Feature-first clean architecture. See `.claude/rules/architecture.md` for layer rules and `.claude/rules/flutter.md` for Flutter/Cubit conventions.
 

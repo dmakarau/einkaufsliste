@@ -62,9 +62,23 @@ Edit `.dart_defines` (never commit this file — it is gitignored):
 
 ### 3. Set up the Supabase database
 
-Run the SQL below in the Supabase SQL Editor (one time, in order).
-
 Also disable **Confirm email** in Supabase → Authentication → Providers → Email (required for immediate sign-in).
+
+#### Option A — Supabase CLI (recommended)
+
+Requires Docker Desktop running. Creates a `.env.supabase` file with your database password (find it in Supabase Dashboard → Project Settings → Database):
+
+```bash
+echo "SUPABASE_DB_PASSWORD=your_db_password" > .env.supabase
+supabase link --project-ref your_project_ref
+supabase db push --password your_db_password
+```
+
+This applies all migrations from `supabase/migrations/` in order — tables, RLS policies, Realtime setup, and triggers — in a single command.
+
+#### Option B — Manual SQL
+
+Run the SQL below in the Supabase SQL Editor (one time, in order).
 
 #### Step 1 — Core tables
 
@@ -380,4 +394,9 @@ flutter analyze                                           # lint
 dart format lib/                                          # format
 flutter gen-l10n                                          # regen translations (after editing .arb files)
 dart run build_runner build --delete-conflicting-outputs  # regen Hive adapters (after model changes)
+
+# Supabase schema management (requires Docker Desktop)
+supabase db push --password $SUPABASE_DB_PASSWORD        # apply pending migrations to remote
+supabase db pull --password $SUPABASE_DB_PASSWORD        # pull dashboard changes as a new migration
+supabase db diff --password $SUPABASE_DB_PASSWORD -f name  # generate a named diff migration
 ```

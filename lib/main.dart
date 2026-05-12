@@ -255,7 +255,11 @@ class _AppContentState extends State<_AppContent> with WidgetsBindingObserver {
               unawaited(listCubit.syncFromRemote());
             } else if (state is FamilyNoGroup) {
               listCubit.stopWatching();
-              unawaited(listCubit.syncFromRemote());
+              // Guard against sign-out: FamilyNoGroup also fires when the user
+              // signs out, but by then the session may already be invalid.
+              if (context.read<AuthCubit>().state is AuthAuthenticated) {
+                unawaited(listCubit.syncFromRemote());
+              }
             }
           },
         ),

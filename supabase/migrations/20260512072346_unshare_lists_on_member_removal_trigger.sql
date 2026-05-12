@@ -20,6 +20,8 @@ begin
 end;
 $$;
 
+drop trigger if exists unshare_lists_on_member_removal on public.family_group_members;
+
 create trigger unshare_lists_on_member_removal
   after delete on public.family_group_members
   for each row execute procedure public.unshare_lists_on_member_removal();

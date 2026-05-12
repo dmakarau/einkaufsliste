@@ -41,11 +41,20 @@ create policy "insert_items"
     )
   );
 
--- UPDATE: list-access gate only (no owner_id shortcut)
+-- UPDATE: list-access gate only (no owner_id shortcut).
+-- WITH CHECK mirrors USING so that moving an item to a different list
+-- (if that feature is ever added) is also gated by list-based access.
 create policy "update_items"
   on "public"."shopping_items"
   as permissive for update to public
   using (
+    list_id in (
+      select id from public.shopping_lists
+      where owner_id = auth.uid()
+         or family_group_id in (select public.get_my_accepted_group_ids())
+    )
+  )
+  with check (
     list_id in (
       select id from public.shopping_lists
       where owner_id = auth.uid()

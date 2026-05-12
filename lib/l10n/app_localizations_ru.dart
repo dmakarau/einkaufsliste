@@ -262,6 +262,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listenTeilenStop => 'Прекратить доступ';
 
   @override
+  String get nurEigentuemerKannTeilen =>
+      'Только владелец списка может делиться им или отменить доступ';
+
+  @override
   String get listGeteilt => 'Доступна группе';
 
   @override

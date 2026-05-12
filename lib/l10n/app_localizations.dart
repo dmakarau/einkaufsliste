@@ -598,6 +598,12 @@ abstract class AppLocalizations {
   /// **'Stop sharing'**
   String get listenTeilenStop;
 
+  /// No description provided for @nurEigentuemerKannTeilen.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the list owner can share or unshare this list'**
+  String get nurEigentuemerKannTeilen;
+
   /// No description provided for @listGeteilt.
   ///
   /// In en, this message translates to:

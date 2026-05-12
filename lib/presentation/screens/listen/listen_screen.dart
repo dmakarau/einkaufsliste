@@ -140,7 +140,12 @@ class _ListenScreenState extends State<ListenScreen> {
     final currentUserId =
         (context.read<AuthCubit>().state as AuthAuthenticated?)?.user.id;
     if (currentUserId == null) return;
-    if (list.ownerId != null && list.ownerId != currentUserId) return;
+    if (list.ownerId != null && list.ownerId != currentUserId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.nurEigentuemerKannTeilen)),
+      );
+      return;
+    }
 
     final groupId = familyState.group.id;
     final listCubit = context.read<ShoppingListCubit>();

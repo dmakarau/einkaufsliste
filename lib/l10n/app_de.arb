@@ -88,6 +88,7 @@
   "gruppeVerlassenBestaetigung": "Möchtest du diese Gruppe wirklich verlassen?",
   "listenTeilen": "Mit Gruppe teilen",
   "listenTeilenStop": "Teilen beenden",
+  "nurEigentuemerKannTeilen": "Nur der Eigentümer kann diese Liste teilen oder das Teilen beenden",
   "listGeteilt": "Mit Gruppe geteilt",
   "einladungAusstehend": "Ausstehend",
   "einladungAnnehmen": "Einladung annehmen",

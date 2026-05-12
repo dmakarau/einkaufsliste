@@ -377,7 +377,8 @@ lib/
 ├── data/
 │   ├── models/     # Hive-annotated data models
 │   ├── repositories/  # CRUD over Hive boxes
-│   └── services/   # SupabaseSyncService (cloud I/O)
+│   └── services/   # SyncService interface, SupabaseSyncService, ProductSearchService, CategoryPredictionService
+├── l10n/           # ARB translation files + generated localizations
 └── presentation/
     ├── blocs/      # Cubits + States
     ├── screens/    # One folder per screen

@@ -448,6 +448,9 @@ class _MemberTile extends StatelessWidget {
               onPressed: () async {
                 await context.read<FamilyCubit>().removeMember(member.id);
                 if (context.mounted) {
+                  // Admin stays in FamilyHasGroup so the listenWhen in main.dart
+                  // does not fire syncFromRemote — call it explicitly here so the
+                  // admin's list view drops the member's shared lists immediately.
                   unawaited(context.read<ShoppingListCubit>().syncFromRemote());
                 }
               },

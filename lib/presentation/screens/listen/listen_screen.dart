@@ -139,9 +139,8 @@ class _ListenScreenState extends State<ListenScreen> {
     // Only the list owner can share or unshare it.
     final currentUserId =
         (context.read<AuthCubit>().state as AuthAuthenticated?)?.user.id;
-    if (list.ownerId != null && list.ownerId != currentUserId) {
-      return;
-    }
+    if (currentUserId == null) return;
+    if (list.ownerId != null && list.ownerId != currentUserId) return;
 
     final groupId = familyState.group.id;
     final listCubit = context.read<ShoppingListCubit>();

@@ -38,6 +38,7 @@ class ShoppingListModel extends HiveObject {
     bool? isDefault,
     String? familyGroupId,
     bool clearFamilyGroupId = false,
+    String? ownerId,
   }) {
     return ShoppingListModel(
       id: id,
@@ -47,7 +48,7 @@ class ShoppingListModel extends HiveObject {
       familyGroupId: clearFamilyGroupId
           ? null
           : (familyGroupId ?? this.familyGroupId),
-      ownerId: ownerId,
+      ownerId: ownerId ?? this.ownerId,
     );
   }
 }

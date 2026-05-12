@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -245,14 +247,15 @@ class _AppContentState extends State<_AppContent> with WidgetsBindingObserver {
           // the member list) must not tear down and re-subscribe the channel.
           listenWhen: (prev, curr) =>
               (curr is FamilyHasGroup && prev is! FamilyHasGroup) ||
-              curr is FamilyNoGroup,
+              (curr is FamilyNoGroup && prev is! FamilyNoGroup),
           listener: (context, state) {
             final listCubit = context.read<ShoppingListCubit>();
             if (state is FamilyHasGroup) {
               listCubit.watchGroup(state.group.id);
-              listCubit.loadLists();
+              unawaited(listCubit.syncFromRemote());
             } else if (state is FamilyNoGroup) {
               listCubit.stopWatching();
+              unawaited(listCubit.syncFromRemote());
             }
           },
         ),

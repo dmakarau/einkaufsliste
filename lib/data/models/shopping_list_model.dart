@@ -19,12 +19,16 @@ class ShoppingListModel extends HiveObject {
   @HiveField(4)
   final String? familyGroupId;
 
+  @HiveField(5)
+  final String? ownerId;
+
   ShoppingListModel({
     required this.id,
     required this.name,
     this.isDefault = false,
     required this.createdAt,
     this.familyGroupId,
+    this.ownerId,
   });
 
   bool get isShared => familyGroupId != null;
@@ -43,6 +47,7 @@ class ShoppingListModel extends HiveObject {
       familyGroupId: clearFamilyGroupId
           ? null
           : (familyGroupId ?? this.familyGroupId),
+      ownerId: ownerId,
     );
   }
 }

@@ -5,6 +5,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/extensions/build_context_extensions.dart';
 import '../../../data/models/shopping_list_model.dart';
 import '../../../data/repositories/shopping_item_repository.dart';
+import '../../blocs/auth/auth_cubit.dart';
+import '../../blocs/auth/auth_state.dart';
 import '../../blocs/family/family_cubit.dart';
 import '../../blocs/shopping_item/shopping_item_cubit.dart';
 import '../../blocs/shopping_item/shopping_item_state.dart';
@@ -132,6 +134,13 @@ class _ListenScreenState extends State<ListenScreen> {
     final familyState = context.read<FamilyCubit>().state;
     if (familyState is! FamilyHasGroup) {
       return; // not in a group — nothing to show
+    }
+
+    // Only the list owner can share or unshare it.
+    final currentUserId =
+        (context.read<AuthCubit>().state as AuthAuthenticated?)?.user.id;
+    if (list.ownerId != null && list.ownerId != currentUserId) {
+      return;
     }
 
     final groupId = familyState.group.id;

@@ -22,13 +22,14 @@ class ShoppingListModelAdapter extends TypeAdapter<ShoppingListModel> {
       isDefault: fields[2] as bool,
       createdAt: fields[3] as DateTime,
       familyGroupId: fields[4] as String?,
+      ownerId: fields[5] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ShoppingListModel obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -38,7 +39,9 @@ class ShoppingListModelAdapter extends TypeAdapter<ShoppingListModel> {
       ..writeByte(3)
       ..write(obj.createdAt)
       ..writeByte(4)
-      ..write(obj.familyGroupId);
+      ..write(obj.familyGroupId)
+      ..writeByte(5)
+      ..write(obj.ownerId);
   }
 
   @override

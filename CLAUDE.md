@@ -1,3 +1,7 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # Einkaufsliste — Claude Development Guide
 
 ## Project Overview
@@ -8,8 +12,15 @@ A German shopping list app for iOS/Android built with Flutter. Features multiple
 # Run the app (secrets required via dart-define)
 flutter run --dart-define-from-file=.dart_defines
 
-# Run tests
+# Run all tests
 flutter test
+
+# Run a single test file
+flutter test test/blocs/auth_cubit_test.dart
+
+# Run Hive-touching tests with concurrency=1 (settings_cubit, add_item_screen)
+# Hive.init() is a global singleton — parallel test isolates corrupt each other
+flutter test --concurrency=1 test/blocs/settings_cubit_test.dart test/widgets/add_item_screen_autocomplete_test.dart
 
 # Lint
 flutter analyze
@@ -36,6 +47,32 @@ All credentials are passed at build time via `--dart-define-from-file=.dart_defi
 | `GOOGLE_WEB_CLIENT_ID` | Web OAuth client ID (from Google Cloud Console) |
 | `GOOGLE_IOS_CLIENT_ID` | iOS OAuth client ID (from Google Cloud Console) |
 
+`.env.supabase` is a separate gitignored file used by the Supabase CLI and the pre-commit drift hook:
+```
+SUPABASE_DB_PASSWORD=your_db_password
+```
+
+## Supabase Schema Management
+The `supabase/` folder contains the CLI config and all migrations. The baseline is `supabase/migrations/20260511200647_remote_schema.sql`. Requires Docker Desktop running.
+
+```bash
+# Apply all pending migrations to the remote database
+supabase db push --password $SUPABASE_DB_PASSWORD
+
+# Pull schema changes made directly in the Supabase dashboard
+supabase db pull --password $SUPABASE_DB_PASSWORD
+
+# Generate a named diff (preferred for surgical changes)
+supabase db diff --password $SUPABASE_DB_PASSWORD -f describe_the_change
+
+# List migration history
+supabase migration list --password $SUPABASE_DB_PASSWORD
+```
+
+**After making a schema change in the Supabase dashboard:** run `/supabase-sync` — Claude detects the diff, writes a named migration file, and commits it.
+
+**Pre-commit hook:** every `git commit` automatically runs `supabase db diff`. If uncommitted schema changes are detected, the commit is blocked and `/supabase-sync` is suggested.
+
 ## Architecture
 Feature-first clean architecture. See `.claude/rules/architecture.md` for layer rules and `.claude/rules/flutter.md` for Flutter/Cubit conventions.
 
@@ -53,7 +90,9 @@ lib/
 └── main.dart           # Hive init, seed data, BlocProviders, Supabase init; _AppContent lifecycle observer
 ```
 
-**Data flow:** Cubits read from repositories (Hive). After every write, Cubits call `SyncService` fire-and-forget (implementation: `SupabaseSyncService`). On sign-in, `AuthCubit` calls `pullAll()` which replaces Hive with Supabase data. `ShoppingListCubit.syncFromRemote()` provides the same pull on app resume (`AppLifecycleState.resumed` via `_AppContent` in `main.dart`) and on pull-to-refresh in `AllgemeinScreen` / `ListDetailScreen`.
+**Data flow:** Cubits read from repositories (Hive). After every write, Cubits call `SyncService` fire-and-forget (implementation: `SupabaseSyncService`). On sign-in, `AuthCubit` calls `pullAll()` which replaces Hive with Supabase data. `ShoppingListCubit.syncFromRemote()` provides the same pull on app resume (`AppLifecycleState.resumed` via `_AppContent` in `main.dart`) and on pull-to-refresh in `AllgemeinScreen` / `ListDetailScreen`. `FamilyCubit.loadGroupStatus()` is also called on resume, guarded by `AuthAuthenticated` check (resume fires before the session is established during OAuth redirects, so the guard prevents a stale-JWT query from emitting `FamilyError`).
+
+**`AuthAuthenticated.isSynced` flag:** `AuthAuthenticated` carries an `isSynced: bool` field (default `false`). `checkAuthStatus()` emits `isSynced: false` (session restored from cache, no remote pull yet). `_onAuthStateChanged` emits `isSynced: true` after `pullAll()` completes. The `BlocListener` in `main.dart` reacts to both the type-change transition *and* the `false → true` transition so `loadLists()` is always called after `pullAll()` — this fixes the Google cold-start race where `TOKEN_REFRESHED` arrived after `checkAuthStatus()` had already emitted `AuthAuthenticated`.
 
 ## Tech Stack
 | Concern | Package |
@@ -118,7 +157,7 @@ Modal screens (e.g. AddItemScreen) use `showModalBottomSheet`, not a route.
 
 Tests live in `test/blocs/` (Cubit unit tests), `test/services/` (service unit tests), `test/widgets/` (widget tests), and `test/helpers/` (shared fakes).
 Covered: `ShoppingListCubit`, `ShoppingItemCubit`, `AuthCubit`, `SettingsCubit`, `ProductSearchService`, `CategoryPredictionService`, `AddItemScreen` (autocomplete + category prediction behaviour).
-Not covered: `AuthRepository`, `SupabaseSyncService`, `FamilyGroupRepository`, `FamilyCubit` (wrap Supabase directly, no injection point).
+Not covered: `AuthRepository`, `SupabaseSyncService`, `FamilyGroupRepository`, `FamilyCubit` (wrap Supabase directly, no injection point). Specifically, `FamilyCubit`'s Realtime paths (`_refreshMembers`, `subscribeToMemberChanges`, `subscribeToInvites`) have no unit tests — they require a live Supabase channel and are verified on-device only.
 
 See `.claude/rules/testing.md` for test infrastructure, the `MockAuthRepository` gotcha, async assertion patterns, and Hive test setup.
 
@@ -136,6 +175,6 @@ All tables have RLS enabled. See `.claude/rules/supabase.md` for RLS policy deta
 
 **Sharing model:** A list is shared with a group by setting `family_group_id`. RLS lets all accepted members read and write items in shared lists. Owner controls INSERT/UPDATE/DELETE on the list record itself.
 
-**Realtime:** `shopping_lists`, `shopping_items`, and `family_group_members` are in the Supabase realtime publication. `ShoppingListCubit` subscribes to `shopping_lists` changes (filtered by `family_group_id`) when the user is in a group. Item changes propagate to group members via a Postgres trigger (`shopping_items_touch_list`) that bumps `shopping_lists.updated_at` on every item INSERT/UPDATE/DELETE — the app does not subscribe to `shopping_items` Realtime events directly (Supabase cannot reliably evaluate the complex group-membership RLS policy at Realtime event time).
+**Realtime:** `shopping_lists`, `shopping_items`, and `family_group_members` are in the Supabase realtime publication. `ShoppingListCubit` subscribes to `shopping_lists` changes (filtered by `family_group_id`) when the user is in a group. Item changes propagate via a Postgres trigger (`shopping_items_touch_list`) that bumps `shopping_lists.updated_at` — the app does not subscribe to `shopping_items` Realtime events directly (Supabase cannot reliably evaluate the complex group-membership RLS policy at Realtime event time). `FamilyCubit` subscribes to `family_group_members` via two channels: `'members_$groupId'` (admin/member list updates — INSERT/UPDATE/DELETE) and `'invites_$uid'` (incoming invite notification for users not yet in a group — INSERT only). For `family_group_members` Realtime to work, three Supabase-side requirements must be met — see `.claude/rules/supabase.md` for the required SQL.
 
 **Storage:** bucket `shopping-item-images` (public). Images are uploaded by `SupabaseSyncService.pushItem()` when `imagePath` is a local file path; the local path is replaced with the public URL before the DB upsert.

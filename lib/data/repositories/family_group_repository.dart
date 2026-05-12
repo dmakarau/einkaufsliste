@@ -9,9 +9,10 @@ class FamilyGroupRepositoryException implements Exception {
 }
 
 class FamilyGroupRepository {
-  const FamilyGroupRepository(this._client);
+  FamilyGroupRepository(this._client);
 
   final SupabaseClient _client;
+  RealtimeChannel? _membersChannel;
 
   String? get _uid => _client.auth.currentUser?.id;
   String? get _email => _client.auth.currentUser?.email;
@@ -168,6 +169,73 @@ class FamilyGroupRepository {
       await _client.from('family_groups').delete().eq('id', groupId);
     } on PostgrestException catch (e) {
       throw FamilyGroupRepositoryException(e.message);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Realtime subscription for member changes
+  // ---------------------------------------------------------------------------
+
+  /// Subscribes to INSERT/UPDATE/DELETE on [groupId]'s member rows.
+  /// Calls [onChanged] on any event so the caller can refresh the list.
+  void subscribeToMemberChanges(String groupId, void Function() onChanged) {
+    unsubscribeMemberChanges();
+    _membersChannel = _client
+        .channel('members_$groupId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'family_group_members',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'group_id',
+            value: groupId,
+          ),
+          callback: (_) => onChanged(),
+        )
+        .subscribe();
+  }
+
+  void unsubscribeMemberChanges() {
+    if (_membersChannel != null) {
+      _client.removeChannel(_membersChannel!);
+      _membersChannel = null;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Realtime subscription for incoming invites (used when not yet in a group)
+  // ---------------------------------------------------------------------------
+
+  RealtimeChannel? _invitesChannel;
+
+  /// Subscribes to INSERT events on [family_group_members] where the invited
+  /// [email] matches. Calls [onInvite] so the caller can call loadGroupStatus.
+  void subscribeToInvites(String email, void Function() onInvite) {
+    unsubscribeInvites();
+    // Use uid (UUID) as the channel name — email contains @ and . which can
+    // break Supabase Realtime channel name parsing.
+    final uid = _uid ?? email;
+    _invitesChannel = _client
+        .channel('invites_$uid')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'family_group_members',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'email',
+            value: email,
+          ),
+          callback: (_) => onInvite(),
+        )
+        .subscribe();
+  }
+
+  void unsubscribeInvites() {
+    if (_invitesChannel != null) {
+      _client.removeChannel(_invitesChannel!);
+      _invitesChannel = null;
     }
   }
 }

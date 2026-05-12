@@ -62,9 +62,23 @@ Edit `.dart_defines` (never commit this file — it is gitignored):
 
 ### 3. Set up the Supabase database
 
-Run the SQL below in the Supabase SQL Editor (one time, in order).
-
 Also disable **Confirm email** in Supabase → Authentication → Providers → Email (required for immediate sign-in).
+
+#### Option A — Supabase CLI (recommended)
+
+Requires Docker Desktop running. Creates a `.env.supabase` file with your database password (find it in Supabase Dashboard → Project Settings → Database):
+
+```bash
+echo "SUPABASE_DB_PASSWORD=your_db_password" > .env.supabase
+supabase link --project-ref your_project_ref
+supabase db push --password your_db_password
+```
+
+This applies all migrations from `supabase/migrations/` in order — tables, RLS policies, Realtime setup, and triggers — in a single command.
+
+#### Option B — Manual SQL
+
+Run the SQL below in the Supabase SQL Editor (one time, in order).
 
 #### Step 1 — Core tables
 
@@ -173,13 +187,18 @@ create policy "delete_group" on family_groups for delete
   using (owner_id = auth.uid());
 
 -- family_group_members
+-- The fourth OR clause (owner lookup via family_groups) is required for Supabase
+-- Realtime to evaluate DELETE events. Supabase cannot reliably resolve the
+-- self-referential subquery (querying family_group_members from within its own
+-- RLS policy) at Realtime event time, but can look up family_groups directly.
 create policy "select_members" on family_group_members for select using (
-  user_id = auth.uid()
-  or email = (select email from auth.users where id = auth.uid())
-  or group_id in (
+  (user_id = auth.uid())
+  or (email = auth.email())
+  or (group_id in (
     select group_id from family_group_members
     where user_id = auth.uid() and status = 'accepted'
-  )
+  ))
+  or (group_id in (select id from family_groups where owner_id = auth.uid()))
 );
 create policy "insert_invite" on family_group_members for insert
   with check (
@@ -264,6 +283,30 @@ In Supabase Dashboard → Database → Replication, add these tables to the real
 - `shopping_lists`
 - `shopping_items`
 - `family_group_members`
+
+Then run these two SQL statements in the SQL Editor:
+
+```sql
+-- Required so Supabase Realtime DELETE events carry full row data for RLS evaluation.
+-- Without this, DELETE events only include the PK and are silently dropped.
+ALTER TABLE family_group_members REPLICA IDENTITY FULL;
+
+-- Trigger bumps shopping_lists.updated_at on every item change so the app can
+-- subscribe to shopping_lists changes only (item Realtime is not reliable for
+-- group membership RLS evaluation).
+create or replace function public.touch_list_updated_at()
+returns trigger language plpgsql as $$
+begin
+  update shopping_lists set updated_at = now()
+  where id = coalesce(NEW.list_id, OLD.list_id);
+  return coalesce(NEW, OLD);
+end;
+$$;
+
+create trigger shopping_items_touch_list
+  after insert or update or delete on shopping_items
+  for each row execute procedure public.touch_list_updated_at();
+```
 
 ### 4. Set up Supabase Storage
 
@@ -352,4 +395,9 @@ flutter analyze                                           # lint
 dart format lib/                                          # format
 flutter gen-l10n                                          # regen translations (after editing .arb files)
 dart run build_runner build --delete-conflicting-outputs  # regen Hive adapters (after model changes)
+
+# Supabase schema management (requires Docker Desktop)
+supabase db push --password $SUPABASE_DB_PASSWORD        # apply pending migrations to remote
+supabase db pull --password $SUPABASE_DB_PASSWORD        # pull dashboard changes as a new migration
+supabase db diff --password $SUPABASE_DB_PASSWORD -f name  # generate a named diff migration
 ```

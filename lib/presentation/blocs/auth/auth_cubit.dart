@@ -51,7 +51,7 @@ class AuthCubit extends Cubit<AuthState> {
           }),
         );
       }
-      emit(AuthAuthenticated(user));
+      emit(AuthAuthenticated(user, isSynced: true));
     } else {
       // Clear lists and items so loadLists() sees empty boxes after sign-out.
       // Categories are NOT cleared: the 13 defaults are always needed for the

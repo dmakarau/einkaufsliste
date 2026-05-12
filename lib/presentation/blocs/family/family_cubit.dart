@@ -25,6 +25,10 @@ class FamilyCubit extends Cubit<FamilyState> {
 
   Future<void> loadGroupStatus() async {
     if (_authRepo.currentUser == null) return;
+    // Tear down any existing channels before re-evaluating state so no channel
+    // is ever left open regardless of which branch below is taken.
+    _groupRepo.unsubscribeMemberChanges();
+    _groupRepo.unsubscribeInvites();
     emit(const FamilyLoading());
     try {
       // Check if already in a group (own or joined).
@@ -33,6 +37,7 @@ class FamilyCubit extends Cubit<FamilyState> {
         final members = await _groupRepo.getMembers(group.id);
         final isOwner = group.ownerId == _authRepo.currentUser!.id;
         emit(FamilyHasGroup(group: group, members: members, isOwner: isOwner));
+        _groupRepo.subscribeToMemberChanges(group.id, _refreshMembers);
         return;
       }
 
@@ -61,9 +66,52 @@ class FamilyCubit extends Cubit<FamilyState> {
         return;
       }
 
+      // No group and no pending invite — subscribe to incoming invites so the
+      // UI updates immediately when the admin sends one.
+      final email = _authRepo.currentUser?.email;
+      if (email != null) {
+        _groupRepo.subscribeToInvites(email, () {
+          if (!isClosed) loadGroupStatus();
+        });
+      }
       emit(const FamilyNoGroup());
     } on FamilyGroupRepositoryException catch (e) {
       emit(FamilyError(e.message));
+    }
+  }
+
+  Future<void> _refreshMembers() async {
+    final current = state;
+    if (current is! FamilyHasGroup) return;
+    try {
+      final members = await _groupRepo.getMembers(current.group.id);
+      final uid = _authRepo.currentUser?.id;
+      final email = _authRepo.currentUser?.email;
+      // Only accepted rows count — pending invite rows for the same email also
+      // pass RLS (email = auth.email()) and would falsely signal still-member.
+      final stillMember = members.any(
+        (m) => m.isAccepted && (m.userId == uid || m.email == email),
+      );
+      if (!stillMember) {
+        // Use microtask so loadGroupStatus() runs after the current Realtime
+        // callback exits — removing a channel from within its own callback can
+        // cause the Supabase client to behave unexpectedly.
+        Future.microtask(() {
+          if (!isClosed) loadGroupStatus();
+        });
+        return;
+      }
+      emit(
+        FamilyHasGroup(
+          group: current.group,
+          members: members,
+          isOwner: current.isOwner,
+        ),
+      );
+    } on FamilyGroupRepositoryException {
+      Future.microtask(() {
+        if (!isClosed) loadGroupStatus();
+      });
     }
   }
 
@@ -129,6 +177,7 @@ class FamilyCubit extends Cubit<FamilyState> {
     emit(const FamilyLoading());
     try {
       await _groupRepo.leaveGroup(current.group.id);
+      _groupRepo.unsubscribeMemberChanges();
       emit(const FamilyNoGroup());
     } on FamilyGroupRepositoryException catch (e) {
       emit(FamilyError(e.message));
@@ -145,6 +194,7 @@ class FamilyCubit extends Cubit<FamilyState> {
     emit(const FamilyLoading());
     try {
       await _groupRepo.deleteGroup(current.group.id);
+      _groupRepo.unsubscribeMemberChanges();
       emit(const FamilyNoGroup());
     } on FamilyGroupRepositoryException catch (e) {
       emit(FamilyError(e.message));
@@ -160,6 +210,8 @@ class FamilyCubit extends Cubit<FamilyState> {
     if (current is! FamilyHasGroup || !current.isOwner) return;
     try {
       await _groupRepo.removeMember(memberId);
+      // Realtime will fire _refreshMembers() — explicit reload here ensures the
+      // UI updates immediately even if the Realtime event arrives with a delay.
       final members = await _groupRepo.getMembers(current.group.id);
       emit(
         FamilyHasGroup(
@@ -171,5 +223,12 @@ class FamilyCubit extends Cubit<FamilyState> {
     } on FamilyGroupRepositoryException catch (e) {
       emit(FamilyError(e.message));
     }
+  }
+
+  @override
+  Future<void> close() {
+    _groupRepo.unsubscribeMemberChanges();
+    _groupRepo.unsubscribeInvites();
+    return super.close();
   }
 }

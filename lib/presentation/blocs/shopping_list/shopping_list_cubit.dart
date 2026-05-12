@@ -42,6 +42,7 @@ class ShoppingListCubit extends Cubit<ShoppingListState> {
       id: _uuid.v4(),
       name: name,
       createdAt: DateTime.now(),
+      ownerId: _sync.currentUserId,
     );
     await _listRepo.add(list);
     unawaited(

@@ -262,6 +262,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get listenTeilenStop => 'Stop sharing';
 
   @override
+  String get nurEigentuemerKannTeilen =>
+      'Only the list owner can share or unshare this list';
+
+  @override
   String get listGeteilt => 'Shared with group';
 
   @override

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -241,18 +243,38 @@ class _AppContentState extends State<_AppContent> with WidgetsBindingObserver {
         ),
         BlocListener<FamilyCubit, FamilyState>(
           // Only wire up watchGroup on the first transition into FamilyHasGroup.
-          // Repeated FamilyHasGroup emissions (e.g. after inviteMember refreshes
-          // the member list) must not tear down and re-subscribe the channel.
+          // Repeated FamilyHasGroup emissions (e.g. after _refreshMembers fires)
+          // must not tear down and re-subscribe the Realtime channel.
           listenWhen: (prev, curr) =>
-              (curr is FamilyHasGroup && prev is! FamilyHasGroup) ||
-              curr is FamilyNoGroup,
+              curr is FamilyHasGroup && prev is! FamilyHasGroup,
+          listener: (context, state) {
+            if (state is FamilyHasGroup) {
+              context.read<ShoppingListCubit>().watchGroup(state.group.id);
+            }
+          },
+        ),
+        BlocListener<FamilyCubit, FamilyState>(
+          // Sync lists on every FamilyHasGroup emission — this covers both the
+          // initial group entry and _refreshMembers() calls (e.g. when a member
+          // leaves, _refreshMembers emits FamilyHasGroup→FamilyHasGroup directly
+          // with no FamilyLoading in between, so the watchGroup listener above
+          // would not fire for it).
+          // Also sync when leaving the group (FamilyNoGroup), guarded by auth
+          // check to avoid a stale-JWT call during sign-out.
+          listenWhen: (prev, curr) =>
+              curr is FamilyHasGroup ||
+              (curr is FamilyNoGroup && prev is! FamilyNoGroup),
           listener: (context, state) {
             final listCubit = context.read<ShoppingListCubit>();
             if (state is FamilyHasGroup) {
-              listCubit.watchGroup(state.group.id);
-              listCubit.loadLists();
+              unawaited(listCubit.syncFromRemote());
             } else if (state is FamilyNoGroup) {
               listCubit.stopWatching();
+              // Guard against sign-out: FamilyNoGroup also fires when the user
+              // signs out, but by then the session may already be invalid.
+              if (context.read<AuthCubit>().state is AuthAuthenticated) {
+                unawaited(listCubit.syncFromRemote());
+              }
             }
           },
         ),

@@ -22,6 +22,9 @@ class SupabaseSyncService implements SyncService {
   @override
   bool get isAuthenticated => _uid != null;
 
+  @override
+  String? get currentUserId => _uid;
+
   // ---------------------------------------------------------------------------
   // Pull-all: called on sign-in.
   // Supabase is the source of truth — local offline data is discarded.
@@ -186,6 +189,13 @@ class SupabaseSyncService implements SyncService {
         .from('shopping_lists')
         .update({'family_group_id': null})
         .eq('id', listId);
+    // The Realtime UPDATE event for this list won't reach group members because
+    // RLS evaluates the NEW row (family_group_id = null) and denies access.
+    // Send a broadcast instead — broadcasts bypass RLS.
+    await _groupChannel?.sendBroadcastMessage(
+      event: 'list_unshared',
+      payload: {'list_id': listId},
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -208,6 +218,10 @@ class SupabaseSyncService implements SyncService {
           ),
           callback: (_) => onChanged(),
         )
+        // Fires when the admin unshares a list: the Postgres UPDATE event is
+        // dropped by RLS (member can no longer see the now-unshared list), so
+        // the admin broadcasts explicitly on this channel instead.
+        .onBroadcast(event: 'list_unshared', callback: (_) => onChanged())
         .subscribe();
   }
 
@@ -230,6 +244,7 @@ class SupabaseSyncService implements SyncService {
       isDefault: row['is_default'] as bool,
       createdAt: DateTime.parse(row['created_at'] as String),
       familyGroupId: row['family_group_id'] as String?,
+      ownerId: row['owner_id'] as String?,
     );
   }
 

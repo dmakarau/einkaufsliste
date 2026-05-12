@@ -65,6 +65,7 @@ void main() {
       verify(() => listRepo.add(any())).called(1);
       expect(sync.pushedLists.length, 1);
       expect(sync.pushedLists.first.name, 'Wocheneinkauf');
+      expect(sync.pushedLists.first.ownerId, 'test-user-id');
     });
   });
 

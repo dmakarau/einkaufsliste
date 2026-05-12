@@ -122,8 +122,11 @@
 - **INSERT/UPDATE/DELETE**: `owner_id = uid` only (only the list creator can rename/delete the list)
 
 ### `shopping_items`
-- **SELECT**: `owner_id = uid` OR item's list is shared with an accepted group
-- **INSERT/UPDATE/DELETE**: same — group members can write items to shared lists
+- **SELECT**: item's parent list is owned by the user OR its `family_group_id` is in the user's accepted groups (list-based access only — no `owner_id` shortcut)
+- **INSERT**: `owner_id = auth.uid()` AND parent list is accessible (same list-based check)
+- **UPDATE/DELETE**: parent list is accessible (same list-based check)
+
+> All four policies use a list-based subquery: `list_id IN (SELECT id FROM shopping_lists WHERE owner_id = auth.uid() OR family_group_id IN (SELECT get_my_accepted_group_ids()))`. There is no `owner_id = uid` shortcut — this prevents removed members from accessing their own items in lists they no longer have access to.
 
 ### `categories`
 - All operations: `owner_id = uid` only (categories are not shared)
@@ -141,11 +144,45 @@
 
 ---
 
+## Triggers
+
+### `unshare_lists_on_member_removal`
+AFTER DELETE on `family_group_members`. When an accepted member is removed from a group, automatically sets `family_group_id = null` on all shopping lists they owned that were shared with that group.
+
+**Why `SECURITY DEFINER` is required:** the trigger fires in the session of whoever called DELETE (the admin). The `update_lists` RLS policy allows UPDATE only where `owner_id = auth.uid()` — the admin doesn't own the member's lists, so without `SECURITY DEFINER` the UPDATE is silently blocked. With `SECURITY DEFINER` the function runs as the function owner (superuser context) and bypasses RLS.
+
+Pending invites (`user_id IS NULL`) are skipped — they have no lists to unshare.
+
+```sql
+create or replace function public.unshare_lists_on_member_removal()
+  returns trigger language plpgsql security definer as $$
+begin
+  if old.user_id is not null then
+    update public.shopping_lists
+    set family_group_id = null
+    where owner_id = old.user_id
+      and family_group_id = old.group_id;
+  end if;
+  return old;
+end;
+$$;
+
+create trigger unshare_lists_on_member_removal
+  after delete on public.family_group_members
+  for each row execute procedure public.unshare_lists_on_member_removal();
+```
+
+### `shopping_items_touch_list`
+AFTER INSERT OR UPDATE OR DELETE on `shopping_items`. Bumps `shopping_lists.updated_at` so the app's `shopping_lists` Realtime subscription (filtered by `family_group_id`) fires on item changes without requiring a separate unreliable `shopping_items` subscription.
+
+---
+
 ## Dart ↔ Supabase Column Mapping
 
 | Dart field | Supabase column | Table |
 |------------|-----------------|-------|
 | `ShoppingListModel.familyGroupId` | `family_group_id` | shopping_lists |
+| `ShoppingListModel.ownerId` | `owner_id` | shopping_lists |
 | `FamilyGroupModel.ownerId` | `owner_id` | family_groups |
 | `FamilyGroupMemberModel.groupId` | `group_id` | family_group_members |
 | `FamilyGroupMemberModel.userId` | `user_id` | family_group_members |
@@ -158,5 +195,6 @@
 - `pullAll()` does **not** filter lists/items by `owner_id` — RLS handles it. Categories are still filtered by `owner_id` (not shared).
 - `pushList()` always includes `'family_group_id': list.familyGroupId` in the upsert (null for personal lists).
 - `shareList()` / `unshareList()` update only the `family_group_id` column on `shopping_lists` in Supabase; the local Hive model is updated via `copyWith(familyGroupId: ...)`.
-- Realtime subscription key: channel name `'group_$groupId'`, subscribes to `shopping_lists` filtered by `family_group_id` only. Item changes are propagated indirectly via a Postgres trigger (`shopping_items_touch_list`) that bumps `shopping_lists.updated_at` on every item INSERT/UPDATE/DELETE. The app does NOT subscribe to `shopping_items` Realtime events directly — Supabase cannot reliably evaluate the complex group-membership RLS policy at Realtime event time, so cross-user item events are silently dropped.
+- Realtime subscription key: channel name `'group_$groupId'`, subscribes to `shopping_lists` filtered by `family_group_id` only. Item changes are propagated indirectly via a Postgres trigger (`shopping_items_touch_list`) that bumps `shopping_lists.updated_at` on every item INSERT/UPDATE/DELETE. The app does NOT subscribe to `shopping_items` Realtime events directly — Supabase cannot reliably evaluate the complex group-membership RLS policy at Realtime event time, so cross-user item events are silently dropped. When a list is unshared (`family_group_id → null`), the Realtime UPDATE event is dropped by RLS for members (they can no longer see the row), so `unshareList()` also sends a Broadcast message on the group channel (`event: 'list_unshared'`); `subscribeToGroupChanges()` listens for this broadcast and calls `onChanged()` → `syncFromRemote()`.
 - `family_group_members` Realtime: channel `'members_$groupId'` (admin/member list updates) and `'invites_$uid'` (incoming invite for non-members). Both require the three SQL changes listed in the RLS section above. Key lessons: (1) tables must be explicitly added to `supabase_realtime` publication; (2) `REPLICA IDENTITY FULL` is required for DELETE events; (3) self-referential subqueries in RLS policies (`get_my_accepted_group_ids()` queries `family_group_members` itself) are not reliably evaluated by Realtime — replace with a lookup on a different table (`family_groups WHERE owner_id = auth.uid()`).
+- `_refreshMembers()` caveat: when a member leaves or is removed, `_refreshMembers()` emits `FamilyHasGroup → FamilyHasGroup` directly with no `FamilyLoading` in between. Any `listenWhen` condition that checks `prev is! FamilyHasGroup` will miss these re-emissions. `main.dart` uses two separate `BlocListener`s to handle this: one for `watchGroup` (first entry only) and one for `syncFromRemote` (every `FamilyHasGroup` emission).

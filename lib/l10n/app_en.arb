@@ -88,6 +88,7 @@
   "gruppeVerlassenBestaetigung": "Are you sure you want to leave this group?",
   "listenTeilen": "Share with group",
   "listenTeilenStop": "Stop sharing",
+  "nurEigentuemerKannTeilen": "Only the list owner can share or unshare this list",
   "listGeteilt": "Shared with group",
   "einladungAusstehend": "Pending",
   "einladungAnnehmen": "Accept invitation",

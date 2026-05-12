@@ -21,6 +21,9 @@ class FakeSyncService extends Fake implements SyncService {
   int pullAllCalled = 0;
   @override
   bool isAuthenticated = false;
+
+  @override
+  String? currentUserId = 'test-user-id';
   bool shouldThrowOnPullAll = false;
 
   @override

@@ -306,6 +306,27 @@ $$;
 create trigger shopping_items_touch_list
   after insert or update or delete on shopping_items
   for each row execute procedure public.touch_list_updated_at();
+
+-- When an accepted member is removed from a group, automatically unshare all
+-- lists they owned that were shared with that group.
+-- SECURITY DEFINER is required: the trigger fires in the admin's session and
+-- RLS on shopping_lists only allows the list owner to UPDATE.
+create or replace function public.unshare_lists_on_member_removal()
+  returns trigger language plpgsql security definer as $$
+begin
+  if old.user_id is not null then
+    update public.shopping_lists
+    set family_group_id = null
+    where owner_id = old.user_id
+      and family_group_id = old.group_id;
+  end if;
+  return old;
+end;
+$$;
+
+create trigger unshare_lists_on_member_removal
+  after delete on public.family_group_members
+  for each row execute procedure public.unshare_lists_on_member_removal();
 ```
 
 ### 4. Set up Supabase Storage

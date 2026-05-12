@@ -263,6 +263,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get listenTeilenStop => 'Teilen beenden';
 
   @override
+  String get nurEigentuemerKannTeilen =>
+      'Nur der Eigentümer kann diese Liste teilen oder das Teilen beenden';
+
+  @override
   String get listGeteilt => 'Mit Gruppe geteilt';
 
   @override

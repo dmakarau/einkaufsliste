@@ -9,6 +9,7 @@ import '../repositories/shopping_list_repository.dart';
 
 abstract interface class SyncService {
   bool get isAuthenticated;
+  String? get currentUserId;
 
   Future<void> pullAll({
     required ShoppingListRepository listRepo,

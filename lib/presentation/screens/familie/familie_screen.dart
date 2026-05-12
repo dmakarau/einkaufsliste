@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -10,7 +8,6 @@ import '../../../data/models/family_group_member_model.dart';
 import '../../blocs/auth/auth_cubit.dart';
 import '../../blocs/auth/auth_state.dart';
 import '../../blocs/family/family_cubit.dart';
-import '../../blocs/shopping_list/shopping_list_cubit.dart';
 
 class FamilieScreen extends StatefulWidget {
   const FamilieScreen({super.key});
@@ -445,17 +442,8 @@ class _MemberTile extends StatelessWidget {
           ? IconButton(
               icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
               tooltip: context.l10n.mitgliedEntfernen,
-              onPressed: () async {
-                final familyCubit = context.read<FamilyCubit>();
-                final listCubit = context.read<ShoppingListCubit>();
-                await familyCubit.removeMember(member.id);
-                if (context.mounted) {
-                  // Admin stays in FamilyHasGroup so the listenWhen in main.dart
-                  // does not fire syncFromRemote — call it explicitly here so the
-                  // admin's list view drops the member's shared lists immediately.
-                  unawaited(listCubit.syncFromRemote());
-                }
-              },
+              onPressed: () =>
+                  context.read<FamilyCubit>().removeMember(member.id),
             )
           : null,
     );
